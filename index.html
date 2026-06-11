@@ -591,9 +591,6 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
     import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // ══════════════════════════════════════════════
-    // CONFIGURAÇÃO FIREBASE - preencha com seus dados
-    // ══════════════════════════════════════════════
     const firebaseConfig = {
       apiKey:            "AIzaSyAt4KqtGJScqzlFMhJbe081GOHER4pBWFc",
       authDomain:        "orvalho-portfolio.firebaseapp.com",
@@ -606,7 +603,6 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // Expõe para o script global
     window._db          = db;
     window._doc         = doc;
     window._setDoc      = setDoc;
@@ -616,16 +612,16 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
     window._deleteDoc   = deleteDoc;
     window._fbReady     = true;
 
-    // Avisa o script principal que o Firebase está pronto
     window.dispatchEvent(new Event("fb-ready"));
   </script>
 <script>
 const KEY="orvalho_v9",CL_KEY="orvalho_cl_v1",PWD="orvalho2026";
-let DB=[],CLLogos=[],ppx=[],eid=null,mgi=0,cgi={},logged=false;
+let DB=[],CLLogos=[],ppx=[],ppxFiles=[],eid=null,mgi=0,cgi={},logged=false;
 
 // ── FIREBASE HELPERS ──
 async function fbSaveStudy(proj){
   if(!window._fbReady)return;
+  // Salva sem as fotos base64 — fotos já são URLs do Storage
   await window._setDoc(window._doc(window._db,"studies",proj.id),proj);
 }
 async function fbDeleteStudy(id){
@@ -634,16 +630,15 @@ async function fbDeleteStudy(id){
 }
 async function fbSaveCL(logos){
   if(!window._fbReady)return;
+  // logos já são URLs do Storage (ou null)
   await window._setDoc(window._doc(window._db,"config","clientes"),{logos});
 }
 async function fbLoadAll(){
   if(!window._fbReady)return;
   try{
-    // estudos
     const snap=await window._getDocs(window._collection(window._db,"studies"));
     DB=[];snap.forEach(d=>DB.push(d.data()));
     if(DB.length)localStorage.setItem(KEY,JSON.stringify(DB));
-    // clientes
     const cl=await window._getDoc(window._doc(window._db,"config","clientes"));
     if(cl.exists()){CLLogos=cl.data().logos||Array(6).fill(null);localStorage.setItem(CL_KEY,JSON.stringify(CLLogos));}
     renderGrid('todos');renderClientes();
@@ -651,6 +646,29 @@ async function fbLoadAll(){
   }catch(e){console.warn("Firebase load error:",e);}
 }
 window.addEventListener("fb-ready",()=>fbLoadAll());
+
+// ── UPLOAD DE IMAGEM PARA O CLOUDINARY (gratuito) ──
+// Preencha com seus dados do Cloudinary (conta gratuita em cloudinary.com)
+const CLOUDINARY_CLOUD_NAME = "dygsqte7y";
+const CLOUDINARY_UPLOAD_PRESET = "orvalho_portfolio"; // preset sem assinatura
+
+async function uploadImageToStorage(file){
+  if(!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME === "SEU_CLOUD_NAME"){
+    throw new Error("Configure o CLOUDINARY_CLOUD_NAME no código. Veja as instruções no README.");
+  }
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  fd.append("folder", "orvalho");
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+    method: "POST", body: fd
+  });
+  if(!res.ok) throw new Error("Cloudinary: erro "+res.status);
+  const data = await res.json();
+  if(data.error) throw new Error("Cloudinary: "+data.error.message);
+  // Retorna URL otimizada (WebP, largura máx 1200px)
+  return data.secure_url.replace("/upload/", "/upload/w_1200,q_auto,f_auto/");
+}
 const CATS={
   eiv:{label:"EIV / RIV",icon:"🏙️",grad:"linear-gradient(140deg,#1a3d10,#285d02,#9abf4a)"},
   flora:{label:"Flora",icon:"🌳",grad:"linear-gradient(140deg,#1a3d10,#285d02,#9abf4a)"},
@@ -734,21 +752,87 @@ function renderClientes(){
   const adm=document.getElementById("cl-admin");if(!adm)return;
   adm.innerHTML=CLLogos.map((logo,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--g50);border-radius:9px;border:1px solid var(--border)"><div style="width:80px;height:40px;border-radius:7px;overflow:hidden;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">${logo?`<img src="${logo}" style="max-width:100%;max-height:100%;object-fit:contain" alt="">`:'<span style="font-size:.65rem;color:var(--muted)">vazio</span>'}</div><div style="flex:1;font-size:.8rem;color:var(--muted)">Cliente ${i+1}</div><div style="display:flex;gap:6px"><button class="bsm be" onclick="uploadCL(${i})">📷 Enviar</button>${logo?`<button class="bsm bd" onclick="removeCL(${i})">✕</button>`:""}</div></div>`).join("");
 }
-function uploadCL(i){const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=ev=>{CLLogos[i]=ev.target.result;saveCL();renderClientes();};rd.readAsDataURL(f);};inp.click();}
-function removeCL(i){CLLogos[i]=null;saveCL();renderClientes();}
+function uploadCL(i){
+  const inp=document.createElement("input");inp.type="file";inp.accept="image/*";
+  inp.onchange=async e=>{
+    const f=e.target.files[0];if(!f)return;
+    const btn=document.querySelector(`[onclick="uploadCL(${i})"]`);
+    if(btn){btn.disabled=true;btn.textContent="⏳";}
+    try{
+      const url=await uploadImageToStorage(f);
+      CLLogos[i]=url;
+      await fbSaveCL(CLLogos);
+      localStorage.setItem(CL_KEY,JSON.stringify(CLLogos));
+      renderClientes();
+    }catch(err){
+      alert("Erro ao enviar logo: "+err.message);
+      if(btn){btn.disabled=false;btn.textContent="📷 Enviar";}
+    }
+  };
+  inp.click();
+}
+async function removeCL(i){
+  CLLogos[i]=null;
+  await fbSaveCL(CLLogos);
+  localStorage.setItem(CL_KEY,JSON.stringify(CLLogos));
+  renderClientes();
+}
 function openAdm(){document.getElementById("abg").classList.add("open");document.getElementById("ap").classList.add("open");document.querySelector(".badm").classList.add("on");if(logged){refList();renderClientes();}}
 function closeAdm(){document.getElementById("abg").classList.remove("open");document.getElementById("ap").classList.remove("open");document.querySelector(".badm").classList.remove("on");}
 function doLogin(){if(document.getElementById("apass").value===PWD){logged=true;document.getElementById("alog").style.display="none";document.getElementById("aok").style.display="flex";refList();renderClientes();}else{document.getElementById("lerr").textContent="Senha incorreta.";document.getElementById("apass").value="";document.getElementById("apass").focus();}}
 function atab(n,b){document.querySelectorAll(".atb").forEach(t=>t.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".asc").forEach(s=>s.classList.remove("on"));document.getElementById("as-"+n).classList.add("on");const sv=document.getElementById("adm-save-btn"),cn=document.getElementById("acan");if(n==="cl"){sv.style.display="none";cn.style.display="none";}else{sv.style.display="";}}
 function refList(){document.getElementById("acnt").textContent=`${DB.length} estudo(s)`;const l=document.getElementById("alist");if(!DB.length){l.innerHTML='<p style="color:var(--muted);text-align:center;padding:18px;font-size:.83rem">Nenhum estudo. Clique em "Novo".</p>';return;}l.innerHTML=DB.map(p=>{const c=CATS[p.cat]||CATS.eiv;return`<div class="pitem"><div class="piif"><div class="pit">${p.title}</div><div class="pim">${c.label} · ${p.year||"s/d"} · ${p.photos&&p.photos.length?p.photos.length+" foto(s)":"sem fotos"}</div></div><div class="piac"><button class="bsm be" onclick="editP('${p.id}')">✏ Editar</button><button class="bsm bd" onclick="delP('${p.id}')">✕</button></div></div>`;}).join("");}
-function clrForm(){eid=null;ppx=[];["fid","fti","fyr","fcl","flo","fde","fdl","fin","fsc","fre","ftg"].forEach(i=>document.getElementById(i).value="");document.getElementById("fca").value="eiv";document.getElementById("pvg").innerHTML="";document.getElementById("eno").style.display="none";document.getElementById("acan").style.display="none";document.getElementById("adm-save-btn").style.display="";document.getElementById("tab-form-btn").textContent="➕ Novo";}
-function editP(id){const p=DB.find(x=>x.id===id);if(!p)return;clrForm();eid=id;document.getElementById("fti").value=p.title||"";document.getElementById("fca").value=p.cat||"eiv";document.getElementById("fyr").value=p.year||"";document.getElementById("fcl").value=p.client||"";document.getElementById("flo").value=p.loc||"";document.getElementById("fde").value=p.desc||"";document.getElementById("fdl").value=p.descl||"";document.getElementById("fin").value=p.infos||"";document.getElementById("fsc").value=p.scope||"";document.getElementById("fre").value=p.results||"";document.getElementById("ftg").value=p.tags||"";ppx=[...(p.photos||[])];rvPrev();document.getElementById("eno").style.display="block";document.getElementById("acan").style.display="inline-flex";document.getElementById("tab-form-btn").textContent="✏ Editando";atab("form",document.getElementById("tab-form-btn"));}
+function clrForm(){eid=null;ppx=[];["fid","fti","fyr","fcl","flo","fde","fdl","fin","fsc","fre","ftg"].forEach(i=>document.getElementById(i)&&(document.getElementById(i).value=""));document.getElementById("fca").value="eiv";document.getElementById("pvg").innerHTML="";document.getElementById("eno").style.display="none";document.getElementById("acan").style.display="none";document.getElementById("adm-save-btn").style.display="";document.getElementById("adm-save-btn").disabled=false;document.getElementById("adm-save-btn").textContent="💾 Salvar";document.getElementById("tab-form-btn").textContent="➕ Novo";}
+function editP(id){const p=DB.find(x=>x.id===id);if(!p)return;clrForm();eid=id;document.getElementById("fti").value=p.title||"";document.getElementById("fca").value=p.cat||"eiv";document.getElementById("fyr").value=p.year||"";document.getElementById("fcl").value=p.client||"";document.getElementById("flo").value=p.loc||"";document.getElementById("fde").value=p.desc||"";document.getElementById("fdl").value=p.descl||"";document.getElementById("fin").value=p.infos||"";document.getElementById("fsc").value=p.scope||"";document.getElementById("fre").value=p.results||"";document.getElementById("ftg").value=p.tags||"";ppx=(p.photos||[]).map(url=>({url,file:null}));rvPrev();document.getElementById("eno").style.display="block";document.getElementById("acan").style.display="inline-flex";document.getElementById("tab-form-btn").textContent="✏ Editando";atab("form",document.getElementById("tab-form-btn"));}
 function delP(id){if(!confirm("Excluir este estudo?"))return;fbDeleteStudy(id);DB=DB.filter(p=>p.id!==id);localStorage.setItem(KEY,JSON.stringify(DB));refList();renderGrid(aCat());}
 function cancelEdit(){clrForm();atab("list",document.getElementById("tab-list-btn"));}
-function saveProj(){const ti=document.getElementById("fti").value.trim();if(!ti){alert("Título obrigatório.");return;}const id=eid||"p"+Date.now();const proj={id,cat:document.getElementById("fca").value,year:document.getElementById("fyr").value.trim(),title:ti,client:document.getElementById("fcl").value.trim(),loc:document.getElementById("flo").value.trim(),desc:document.getElementById("fde").value.trim(),descl:document.getElementById("fdl").value.trim(),infos:document.getElementById("fin").value.trim(),scope:document.getElementById("fsc").value.trim(),results:document.getElementById("fre").value.trim(),tags:document.getElementById("ftg").value.trim(),photos:[...ppx]};if(eid){const i=DB.findIndex(p=>p.id===eid);if(i>-1)DB[i]=proj;else DB.unshift(proj);}else DB.unshift(proj);saveDB();clrForm();refList();renderGrid(aCat());atab("list",document.getElementById("tab-list-btn"));}
+async function saveProj(){
+  const ti=document.getElementById("fti").value.trim();
+  if(!ti){alert("Título obrigatório.");return;}
+  const saveBtn=document.getElementById("adm-save-btn");
+  saveBtn.disabled=true;saveBtn.textContent="⏳ Salvando...";
+  try{
+    const id=eid||("p"+Date.now());
+    // Faz upload das fotos novas (que têm .file) para o Storage
+    const finalPhotos=[];
+    for(const item of ppx){
+      if(item.file){
+        // nova foto — faz upload
+        const path=`studies/${id}/${Date.now()}_${item.file.name.replace(/\s/g,"_")}`;
+        const url=await uploadImageToStorage(item.file);
+        finalPhotos.push(url);
+      } else {
+        // foto já existente (URL do Storage)
+        finalPhotos.push(item.url);
+      }
+    }
+    const proj={id,cat:document.getElementById("fca").value,year:document.getElementById("fyr").value.trim(),title:ti,client:document.getElementById("fcl").value.trim(),loc:document.getElementById("flo").value.trim(),desc:document.getElementById("fde").value.trim(),descl:document.getElementById("fdl").value.trim(),infos:document.getElementById("fin").value.trim(),scope:document.getElementById("fsc").value.trim(),results:document.getElementById("fre").value.trim(),tags:document.getElementById("ftg").value.trim(),photos:finalPhotos};
+    if(eid){const i=DB.findIndex(p=>p.id===eid);if(i>-1)DB[i]=proj;else DB.unshift(proj);}else DB.unshift(proj);
+    await fbSaveStudy(proj);
+    localStorage.setItem(KEY,JSON.stringify(DB));
+    clrForm();refList();renderGrid(aCat());atab("list",document.getElementById("tab-list-btn"));
+    saveBtn.disabled=false;saveBtn.textContent="💾 Salvar";
+  }catch(err){
+    console.error("Erro ao salvar:",err);
+    alert("Erro ao salvar: "+err.message);
+    saveBtn.disabled=false;saveBtn.textContent="💾 Salvar";
+  }
+}
 function aCat(){const b=document.querySelector(".fb.on");return b?b.dataset.cat:"todos";}
-function hf(files){const rem=8-ppx.length;if(!rem){alert("Máximo de 8 fotos.");return;}[...files].slice(0,rem).forEach(f=>{if(!f.type.startsWith("image/"))return;const rd=new FileReader();rd.onload=e=>{ppx.push(e.target.result);rvPrev();};rd.readAsDataURL(f);});}
-function rvPrev(){document.getElementById("pvg").innerHTML=ppx.map((s,i)=>`<div class="pth"><img src="${s}" alt=""><button class="pthx" onclick="rmP(${i})">✕</button></div>`).join("");}
+// ppx = array de {url: string (preview ou URL final), file: File|null}
+function hf(files){
+  const rem=8-ppx.length;
+  if(!rem){alert("Máximo de 8 fotos.");return;}
+  [...files].slice(0,rem).forEach(f=>{
+    if(!f.type.startsWith("image/"))return;
+    const rd=new FileReader();
+    rd.onload=e=>{ppx.push({url:e.target.result,file:f});rvPrev();};
+    rd.readAsDataURL(f);
+  });
+}
+function rvPrev(){
+  document.getElementById("pvg").innerHTML=ppx.map((item,i)=>`<div class="pth"><img src="${item.url}" alt="">${item.file?'<span style="position:absolute;bottom:3px;left:4px;background:rgba(0,0,0,.55);color:#fff;font-size:.55rem;padding:2px 5px;border-radius:4px">novo</span>':''}<button class="pthx" onclick="rmP(${i})">✕</button></div>`).join("");
+}
 function rmP(i){ppx.splice(i,1);rvPrev();}
 function dov(e){e.preventDefault();document.getElementById("dz").classList.add("dov");}
 function dol(){document.getElementById("dz").classList.remove("dov");}
