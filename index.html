@@ -620,9 +620,29 @@ let DB=[],CLLogos=[],ppx=[],ppxFiles=[],eid=null,mgi=0,cgi={},logged=false;
 
 // ── FIREBASE HELPERS ──
 async function fbSaveStudy(proj){
-  if(!window._fbReady)return;
-  // Salva sem as fotos base64 — fotos já são URLs do Storage
-  await window._setDoc(window._doc(window._db,"studies",proj.id),proj);
+
+  if(!window._fbReady) return;
+
+  const cleanProj = {
+    id: proj.id || "",
+    title: proj.title || "",
+    cat: proj.cat || "",
+    year: proj.year || "",
+    client: proj.client || "",
+    loc: proj.loc || "",
+    desc: proj.desc || "",
+    descl: proj.descl || "",
+    infos: proj.infos || "",
+    scope: proj.scope || "",
+    results: proj.results || "",
+    tags: proj.tags || [],
+    photos: Array.isArray(proj.photos) ? proj.photos : []
+  };
+
+  await window._setDoc(
+    window._doc(window._db,"studies",cleanProj.id),
+    cleanProj
+  );
 }
 async function fbDeleteStudy(id){
   if(!window._fbReady)return;
