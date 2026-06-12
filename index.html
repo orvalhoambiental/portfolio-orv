@@ -86,6 +86,7 @@ header{
 h2.t{font-family:"Playfair Display",serif;font-size:clamp(1.65rem,2.8vw,2.3rem);color:var(--g800);margin-bottom:14px;line-height:1.2}
 h2.t em{font-style:normal;color:var(--g500)}
 .sdesc{font-size:.95rem;color:var(--muted);line-height:1.8;font-weight:300}
+.sdesc-mobile-hide{}
 .sli{list-style:none;margin-top:22px}
 .sli li{display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem;color:var(--muted);line-height:1.5}
 .sli li:last-child{border:none}
@@ -305,6 +306,8 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
   .srow{grid-template-columns:1fr;gap:28px}
   h2.t{font-size:1.5rem}
   .sdesc{font-size:.87rem}
+  .sdesc-mobile-hide{display:none}
+  .sc.rv{display:none}
   .pgrid{grid-template-columns:1fr}
   .svgr{grid-template-columns:1fr}
   .sv-span2{grid-template-columns:1fr;max-width:100%}
@@ -371,7 +374,7 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
       <div class="ey">Quem somos</div>
       <h2 class="t">Conectando negócios à natureza de maneira <em>inteligente e responsável</em></h2>
       <p class="sdesc">A Orvalho Consultoria Ambiental desenvolve estudos para apoiar a avaliação de áreas, o planejamento de empreendimentos e a tomada de decisões com mais segurança. Cada projeto é conduzido de forma personalizada, considerando as características da área, os objetivos do cliente e as particularidades de cada demanda.</p>
-      <p class="sdesc" style="margin-top:12px">Acreditamos que o desenvolvimento e a conservação podem caminhar juntos. Por isso, buscamos oferecer informações claras e confiáveis, contribuindo para que nossos clientes avancem em seus projetos de forma responsável e alinhada às exigências ambientais.</p>
+      <p class="sdesc sdesc-mobile-hide">Acreditamos que o desenvolvimento e a conservação podem caminhar juntos. Por isso, buscamos oferecer informações claras e confiáveis, contribuindo para que nossos clientes avancem em seus projetos de forma responsável e alinhada às exigências ambientais.</p>
     </div>
     <div class="sc rv d1">
       <div class="sc-ic">🤝</div>
@@ -404,6 +407,9 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
       <button class="fb" data-cat="educacao">Educação Ambiental</button>
     </div>
     <div class="pgrid" id="pgrid"></div>
+    <div id="ver-mais-wrap" style="display:none;text-align:center;margin-top:28px">
+      <button class="btn bo" id="ver-mais-btn" onclick="showMoreCards()" style="padding:11px 32px;font-size:.9rem">Ver mais estudos ↓</button>
+    </div>
   </div>
 </section>
 
@@ -702,13 +708,29 @@ function seed(){
     photos:[]}];
   saveDB();
 }
+const PAGE_SIZE=6;let pgVisible=PAGE_SIZE;let pgCat="todos";
 function renderGrid(cat){
-  cat=cat||"todos";
+  cat=cat||"todos";pgCat=cat;pgVisible=PAGE_SIZE;
   const g=document.getElementById("pgrid");
   const list=cat==="todos"?DB:DB.filter(p=>p.cat===cat);
-  if(!list.length){g.innerHTML='<div class="empty rv on"><div class="ei">🌿</div><p>Nenhum estudo nesta categoria.<br>Adicione pelo painel admin.</p></div>';return;}
-  g.innerHTML=list.map(p=>cardH(p)).join("");
-  list.forEach(p=>{cgi[p.id]=0;});obsRv();
+  if(!list.length){g.innerHTML='<div class="empty rv on"><div class="ei">🌿</div><p>Nenhum estudo nesta categoria.<br>Adicione pelo painel admin.</p></div>';document.getElementById("ver-mais-wrap").style.display="none";return;}
+  const show=list.slice(0,pgVisible);
+  g.innerHTML=show.map(p=>cardH(p)).join("");
+  show.forEach(p=>{cgi[p.id]=0;});obsRv();
+  const wrap=document.getElementById("ver-mais-wrap");
+  if(list.length>pgVisible){wrap.style.display="block";document.getElementById("ver-mais-btn").textContent=`Ver mais estudos (${list.length-pgVisible} restantes) ↓`;}
+  else wrap.style.display="none";
+}
+function showMoreCards(){
+  const list=pgCat==="todos"?DB:DB.filter(p=>p.cat===pgCat);
+  pgVisible=Math.min(pgVisible+PAGE_SIZE,list.length);
+  const g=document.getElementById("pgrid");
+  const show=list.slice(0,pgVisible);
+  g.innerHTML=show.map(p=>cardH(p)).join("");
+  show.forEach(p=>{cgi[p.id]=0;});obsRv();
+  const wrap=document.getElementById("ver-mais-wrap");
+  if(list.length>pgVisible){wrap.style.display="block";document.getElementById("ver-mais-btn").textContent=`Ver mais estudos (${list.length-pgVisible} restantes) ↓`;}
+  else wrap.style.display="none";
 }
 function cardH(p){
   const c=CATS[p.cat]||CATS.eiv,px=p.photos||[];
@@ -802,11 +824,12 @@ function openAdm(){document.getElementById("abg").classList.add("open");document
 function closeAdm(){document.getElementById("abg").classList.remove("open");document.getElementById("ap").classList.remove("open");document.querySelector(".badm").classList.remove("on");}
 function doLogin(){if(document.getElementById("apass").value===PWD){logged=true;document.getElementById("alog").style.display="none";document.getElementById("aok").style.display="flex";refList();renderClientes();}else{document.getElementById("lerr").textContent="Senha incorreta.";document.getElementById("apass").value="";document.getElementById("apass").focus();}}
 function atab(n,b){document.querySelectorAll(".atb").forEach(t=>t.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".asc").forEach(s=>s.classList.remove("on"));document.getElementById("as-"+n).classList.add("on");const sv=document.getElementById("adm-save-btn"),cn=document.getElementById("acan");if(n==="cl"){sv.style.display="none";cn.style.display="none";}else{sv.style.display="";}}
-function refList(){document.getElementById("acnt").textContent=`${DB.length} estudo(s)`;const l=document.getElementById("alist");if(!DB.length){l.innerHTML='<p style="color:var(--muted);text-align:center;padding:18px;font-size:.83rem">Nenhum estudo. Clique em "Novo".</p>';return;}l.innerHTML='<p style="font-size:.72rem;color:var(--muted);margin-bottom:8px;text-align:center">↕ Arraste para reordenar</p>'+DB.map((p,idx)=>{const c=CATS[p.cat]||CATS.eiv;return`<div class="pitem" draggable="true" data-idx="${idx}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="dropItem(event)"><div style="color:var(--muted);cursor:grab;font-size:.9rem;padding-right:6px">⠿</div><div class="piif"><div class="pit">${p.title}</div><div class="pim">${c.label} · ${p.year||"s/d"} · ${p.photos&&p.photos.length?p.photos.length+" foto(s)":"sem fotos"}</div></div><div class="piac"><button class="bsm be" onclick="editP('${p.id}')">✏ Editar</button><button class="bsm bd" onclick="delP('${p.id}')">✕</button></div></div>`;}).join("");}
+function refList(){document.getElementById("acnt").textContent=`${DB.length} estudo(s)`;const l=document.getElementById("alist");if(!DB.length){l.innerHTML='<p style="color:var(--muted);text-align:center;padding:18px;font-size:.83rem">Nenhum estudo. Clique em "Novo".</p>';return;}l.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><p style="font-size:.72rem;color:var(--muted);margin:0">↕ Arraste para reordenar</p><button class="bsm be" id="save-order-btn" onclick="saveOrder()" style="display:none">💾 Salvar ordem</button></div>'+DB.map((p,idx)=>{const c=CATS[p.cat]||CATS.eiv;return`<div class="pitem" draggable="true" data-idx="${idx}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="dropItem(event)"><div style="color:var(--muted);cursor:grab;font-size:.9rem;padding-right:6px">⠿</div><div class="piif"><div class="pit">${p.title}</div><div class="pim">${c.label} · ${p.year||"s/d"} · ${p.photos&&p.photos.length?p.photos.length+" foto(s)":"sem fotos"}</div></div><div class="piac"><button class="bsm be" onclick="editP('${p.id}')">✏ Editar</button><button class="bsm bd" onclick="delP('${p.id}')">✕</button></div></div>`;}).join("");}
 let dragIdx=null;
 function dragStart(e){dragIdx=+e.currentTarget.dataset.idx;e.dataTransfer.effectAllowed="move";}
 function dragOver(e){e.preventDefault();e.dataTransfer.dropEffect="move";}
-function dropItem(e){e.preventDefault();const toIdx=+e.currentTarget.dataset.idx;if(dragIdx===null||dragIdx===toIdx)return;const item=DB.splice(dragIdx,1)[0];DB.splice(toIdx,0,item);saveDB();refList();}
+function dropItem(e){e.preventDefault();const toIdx=+e.currentTarget.dataset.idx;if(dragIdx===null||dragIdx===toIdx)return;const item=DB.splice(dragIdx,1)[0];DB.splice(toIdx,0,item);dragIdx=null;refList();const btn=document.getElementById("save-order-btn");if(btn)btn.style.display="inline-flex";}
+function saveOrder(){localStorage.setItem(KEY,JSON.stringify(DB));DB.forEach(p=>fbSaveStudy(p));renderGrid(aCat());const btn=document.getElementById("save-order-btn");if(btn){btn.textContent="✓ Salvo!";btn.disabled=true;setTimeout(()=>{btn.textContent="💾 Salvar ordem";btn.disabled=false;btn.style.display="none";},2000);}}
 
 function clrForm(){eid=null;ppx=[];["fid","fti","fyr","fcl","flo","fde","fdl","fin","fsc","fre","ftg"].forEach(i=>document.getElementById(i)&&(document.getElementById(i).value=""));document.getElementById("fca").value="eiv";document.getElementById("pvg").innerHTML="";document.getElementById("eno").style.display="none";document.getElementById("acan").style.display="none";document.getElementById("adm-save-btn").style.display="";document.getElementById("adm-save-btn").disabled=false;document.getElementById("adm-save-btn").textContent="💾 Salvar";document.getElementById("tab-form-btn").textContent="➕ Novo";}
 function editP(id){const p=DB.find(x=>x.id===id);if(!p)return;clrForm();eid=id;document.getElementById("fti").value=p.title||"";document.getElementById("fca").value=p.cat||"eiv";document.getElementById("fyr").value=p.year||"";document.getElementById("fcl").value=p.client||"";document.getElementById("flo").value=p.loc||"";document.getElementById("fde").value=p.desc||"";document.getElementById("fdl").value=p.descl||"";document.getElementById("fin").value=p.infos||"";document.getElementById("fsc").value=p.scope||"";document.getElementById("fre").value=p.results||"";document.getElementById("ftg").value=p.tags||"";ppx=(p.photos||[]).map(url=>({url,file:null}));rvPrev();document.getElementById("eno").style.display="block";document.getElementById("acan").style.display="inline-flex";document.getElementById("tab-form-btn").textContent="✏ Editando";atab("form",document.getElementById("tab-form-btn"));}
