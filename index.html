@@ -33,7 +33,7 @@ header{
   height:66px;padding:0 40px;
   display:flex;align-items:center;justify-content:space-between;
 }
-.hlogo img{height:42px;width:auto;display:block}
+.hlogo img{height:56px;width:auto;display:block}
 .hnav{display:flex;align-items:center;gap:2px}
 .hnav a{color:var(--muted);font-size:.84rem;padding:7px 13px;border-radius:50px;transition:all .2s}
 .hnav a:hover{color:var(--g800);background:var(--g50)}
@@ -277,7 +277,7 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
 
 @media(max-width:960px){
   header{padding:0 20px;height:60px}
-  .hlogo img{height:34px}
+  .hlogo img{height:38px}
   .hnav a:not(.badm){display:none}
   .w{padding:0 24px}
   #hero{padding:90px 0 64px}
@@ -291,10 +291,33 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
   footer{padding:22px 20px;flex-direction:column;text-align:center}
 }
 @media(max-width:560px){
+  header{height:56px;padding:0 16px}
+  .hlogo img{height:34px}
+  .w{padding:0 16px}
+  #hero{padding:76px 0 52px}
+  #hero h1{font-size:1.75rem;line-height:1.2}
+  .hp{font-size:.88rem}
+  .hchips{gap:6px}
+  .hchip{font-size:.72rem;padding:5px 10px}
+  .hbtns{flex-direction:column;gap:10px}
+  .btn{justify-content:center;width:100%}
+  #sobre,#portfolio,#clientes,#servicos,#contato{padding:48px 0}
+  .srow{grid-template-columns:1fr;gap:28px}
+  h2.t{font-size:1.5rem}
+  .sdesc{font-size:.87rem}
   .pgrid{grid-template-columns:1fr}
   .svgr{grid-template-columns:1fr}
-  .sv-span2{grid-template-columns:1fr}
-  .hchips{gap:6px}
+  .sv-span2{grid-template-columns:1fr;max-width:100%}
+  .svcd{padding:20px 16px}
+  .cl-grid{gap:16px}
+  .cl-slot{width:110px;height:52px}
+  .ccs{flex-direction:column;align-items:stretch}
+  .cc{min-width:unset}
+  #ap{width:100vw}
+  .md{border-radius:14px 14px 0 0;max-height:96vh}
+  .ov{align-items:flex-end;padding:0}
+  footer{padding:20px 16px;gap:10px}
+  .fli{justify-content:center}
 }
 </style>
 </head>
@@ -319,11 +342,11 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
     <div>
       <div class="heyebrow"><span></span>Consultoria Ambiental</div>
       <h1>Estudos ambientais que dão suporte ao <em>desenvolvimento de empreendimentos</em></h1>
-      <p class="hp">A Orvalho desenvolve estudos técnicos nas áreas de fauna, flora, impacto de vizinhança e meio ambiente, auxiliando empreendedores, construtoras, loteadores, arquitetos e engenheiros no atendimento às exigências ambientais e na tomada de decisão.</p>
+      <p class="hp">A Orvalho realiza estudos ambientais para empreendedores, construtoras, loteadores, proprietários e investidores, fornecendo informações que ajudam a compreender o potencial e as restrições de uma área, atender às exigências ambientais e tomar decisões com mais segurança.</p>
       <div class="hchips">
         <span class="hchip">Estudos de Flora</span>
         <span class="hchip">Estudos de Fauna</span>
-        <span class="hchip">EIV / RIV</span>
+        <span class="hchip">Estudo e Relatório de Impacto de Vizinhança (EIV/RIV)</span>
         <span class="hchip">Educação Ambiental</span>
         <span class="hchip">Estudos Ambientais</span>
       </div>
@@ -347,14 +370,8 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
     <div class="rv">
       <div class="ey">Quem somos</div>
       <h2 class="t">Conectando negócios à natureza de maneira <em>inteligente e responsável</em></h2>
-      <p class="sdesc">A Orvalho Consultoria Ambiental atua na elaboração de estudos de fauna, flora, impacto de vizinhança e demais estudos ambientais necessários para a avaliação de áreas e empreendimentos. Cada projeto é conduzido de forma personalizada, considerando as características da área, os objetivos do cliente e as particularidades de cada demanda.</p>
-      <ul class="sli">
-        <li>Estudos de Flora: inventários, fitossociologia, laudos de supressão vegetal</li>
-        <li>Estudos de Fauna: monitoramento, levantamentos e protocolos de resgate</li>
-        <li>Estudo de Impacto de Vizinhança (EIV / RIV)</li>
-        <li>Educação Ambiental e Treinamentos corporativos</li>
-        <li>Regularização junto ao IBAMA e órgãos ambientais</li>
-      </ul>
+      <p class="sdesc">A Orvalho Consultoria Ambiental desenvolve estudos para apoiar a avaliação de áreas, o planejamento de empreendimentos e a tomada de decisões com mais segurança. Cada projeto é conduzido de forma personalizada, considerando as características da área, os objetivos do cliente e as particularidades de cada demanda.</p>
+      <p class="sdesc" style="margin-top:12px">Acreditamos que o desenvolvimento e a conservação podem caminhar juntos. Por isso, buscamos oferecer informações claras e confiáveis, contribuindo para que nossos clientes avancem em seus projetos de forma responsável e alinhada às exigências ambientais.</p>
     </div>
     <div class="sc rv d1">
       <div class="sc-ic">🤝</div>
@@ -398,12 +415,6 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
       <p>Empresas e profissionais que confiam na Orvalho para seus estudos ambientais</p>
     </div>
     <div class="cl-grid rv" id="cl-grid">
-      <div class="cl-slot" id="cl0"><div class="cl-slot-ph">Logo do cliente</div></div>
-      <div class="cl-slot" id="cl1"><div class="cl-slot-ph">Logo do cliente</div></div>
-      <div class="cl-slot" id="cl2"><div class="cl-slot-ph">Logo do cliente</div></div>
-      <div class="cl-slot" id="cl3"><div class="cl-slot-ph">Logo do cliente</div></div>
-      <div class="cl-slot" id="cl4"><div class="cl-slot-ph">Logo do cliente</div></div>
-      <div class="cl-slot" id="cl5"><div class="cl-slot-ph">Logo do cliente</div></div>
     </div>
   </div>
 </section>
@@ -414,7 +425,6 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
     <div class="svhd rv">
       <div class="ey">O que fazemos</div>
       <h2 class="t">Nossos Serviços</h2>
-      <p class="svdesc" style="margin-top:10px">Estudos e documentos técnicos elaborados com rigor, prazo e atendimento personalizado.</p>
     </div>
     <!-- linha 1: 4 cards -->
     <div class="svgr">
@@ -430,7 +440,7 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
       </div>
       <div class="svcd rv d2">
         <span class="svic">🏙️</span>
-        <h3 class="svti">EIV / RIV</h3>
+        <h3 class="svti">Estudo e Relatório de Impacto de Vizinhança (EIV/RIV)</h3>
         <p class="svde">Elaboração do Estudo e do Relatório de Impacto de Vizinhança para empreendimentos que exigem aprovação municipal conforme o Estatuto da Cidade.</p>
       </div>
       <div class="svcd rv d3">
@@ -443,7 +453,7 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
         <div class="svcd rv">
           <span class="svic">📄</span>
           <h3 class="svti">Estudos Ambientais</h3>
-          <p class="svde">Documentos técnicos para avaliação ambiental de áreas e empreendimentos: EVA, RAP, diagnósticos, pareceres e estudos específicos conforme a demanda.</p>
+          <p class="svde">Documentos técnicos para avaliação ambiental de áreas e empreendimentos: Estudo de Viabilidade Ambiental (EVA), Relatório Ambiental Preliminar (RAP), diagnósticos, pareceres e estudos específicos conforme a demanda.</p>
         </div>
         <div class="svcd rv d1">
           <span class="svic">🏛️</span>
@@ -640,7 +650,7 @@ async function fbLoadAll(){
     DB=[];snap.forEach(d=>DB.push(d.data()));
     if(DB.length)localStorage.setItem(KEY,JSON.stringify(DB));
     const cl=await window._getDoc(window._doc(window._db,"config","clientes"));
-    if(cl.exists()){CLLogos=cl.data().logos||Array(6).fill(null);localStorage.setItem(CL_KEY,JSON.stringify(CLLogos));}
+    if(cl.exists()){CLLogos=cl.data().logos||[];localStorage.setItem(CL_KEY,JSON.stringify(CLLogos));}
     renderGrid('todos');renderClientes();
     console.log("Firebase carregado: "+DB.length+" estudo(s)");
   }catch(e){console.warn("Firebase load error:",e);}
@@ -676,7 +686,7 @@ const CATS={
   ambiental:{label:"Estudos Ambientais",icon:"📄",grad:"linear-gradient(140deg,#1a3d10,#285d02,#4d7368)"},
   educacao:{label:"Educação Ambiental",icon:"📚",grad:"linear-gradient(140deg,#5c2e18,#bf6e50,#d9b449)"},
 };
-function loadDB(){try{DB=JSON.parse(localStorage.getItem(KEY))||[];}catch{DB=[];}try{CLLogos=JSON.parse(localStorage.getItem(CL_KEY))||Array(6).fill(null);}catch{CLLogos=Array(6).fill(null);}if(!DB.length)seed();}
+function loadDB(){try{DB=JSON.parse(localStorage.getItem(KEY))||[];}catch{DB=[];}try{CLLogos=JSON.parse(localStorage.getItem(CL_KEY))||[];}catch{CLLogos=[];}if(!DB.length)seed();}
 function saveDB(){localStorage.setItem(KEY,JSON.stringify(DB));DB.forEach(p=>fbSaveStudy(p));}
 function saveCL(){localStorage.setItem(CL_KEY,JSON.stringify(CLLogos));fbSaveCL(CLLogos);}
 function seed(){
@@ -748,10 +758,21 @@ function gnav(d){const t=document.getElementById("mgalt"),sl=t.querySelectorAll(
 function closeModal(){document.getElementById("ov").classList.remove("open");document.body.style.overflow="";}
 document.getElementById("fbr").addEventListener("click",e=>{const b=e.target.closest(".fb");if(!b)return;document.querySelectorAll(".fb").forEach(x=>x.classList.remove("on"));b.classList.add("on");renderGrid(b.dataset.cat);});
 function renderClientes(){
-  for(let i=0;i<6;i++){const slot=document.getElementById("cl"+i);if(!slot)continue;if(CLLogos[i]){slot.innerHTML=`<img src="${CLLogos[i]}" alt="Cliente ${i+1}">`;slot.classList.add("filled");}else{slot.innerHTML='<div class="cl-slot-ph">Logo do cliente</div>';slot.classList.remove("filled");}}
+  // Public grid: only show filled slots
+  const grid=document.getElementById("cl-grid");
+  if(grid){
+    const filled=CLLogos.filter(Boolean);
+    if(filled.length){
+      grid.innerHTML=filled.map((logo,i)=>`<div class="cl-slot filled"><img src="${logo}" alt="Cliente ${i+1}"></div>`).join("");
+    } else {
+      grid.innerHTML="";
+    }
+  }
   const adm=document.getElementById("cl-admin");if(!adm)return;
-  adm.innerHTML=CLLogos.map((logo,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--g50);border-radius:9px;border:1px solid var(--border)"><div style="width:80px;height:40px;border-radius:7px;overflow:hidden;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">${logo?`<img src="${logo}" style="max-width:100%;max-height:100%;object-fit:contain" alt="">`:'<span style="font-size:.65rem;color:var(--muted)">vazio</span>'}</div><div style="flex:1;font-size:.8rem;color:var(--muted)">Cliente ${i+1}</div><div style="display:flex;gap:6px"><button class="bsm be" onclick="uploadCL(${i})">📷 Enviar</button>${logo?`<button class="bsm bd" onclick="removeCL(${i})">✕</button>`:""}</div></div>`).join("");
+  adm.innerHTML=CLLogos.map((logo,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--g50);border-radius:9px;border:1px solid var(--border)"><div style="width:80px;height:40px;border-radius:7px;overflow:hidden;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">${logo?`<img src="${logo}" style="max-width:100%;max-height:100%;object-fit:contain" alt="">`:'<span style="font-size:.65rem;color:var(--muted)">vazio</span>'}</div><div style="flex:1;font-size:.8rem;color:var(--muted)">Cliente ${i+1}</div><div style="display:flex;gap:6px"><button class="bsm be" onclick="uploadCL(${i})">📷 Enviar</button>${logo?`<button class="bsm bd" onclick="removeCL(${i})">✕</button>`:""}</div></div>`).join("")+`<div style="margin-top:10px"><button class="btn bo" style="width:100%;justify-content:center;font-size:.82rem;padding:9px" onclick="addCLSlot()">+ Adicionar logo</button></div>`;
 }
+function addCLSlot(){CLLogos.push(null);renderClientes();}
+
 function uploadCL(i){
   const inp=document.createElement("input");inp.type="file";inp.accept="image/*";
   inp.onchange=async e=>{
@@ -781,7 +802,12 @@ function openAdm(){document.getElementById("abg").classList.add("open");document
 function closeAdm(){document.getElementById("abg").classList.remove("open");document.getElementById("ap").classList.remove("open");document.querySelector(".badm").classList.remove("on");}
 function doLogin(){if(document.getElementById("apass").value===PWD){logged=true;document.getElementById("alog").style.display="none";document.getElementById("aok").style.display="flex";refList();renderClientes();}else{document.getElementById("lerr").textContent="Senha incorreta.";document.getElementById("apass").value="";document.getElementById("apass").focus();}}
 function atab(n,b){document.querySelectorAll(".atb").forEach(t=>t.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".asc").forEach(s=>s.classList.remove("on"));document.getElementById("as-"+n).classList.add("on");const sv=document.getElementById("adm-save-btn"),cn=document.getElementById("acan");if(n==="cl"){sv.style.display="none";cn.style.display="none";}else{sv.style.display="";}}
-function refList(){document.getElementById("acnt").textContent=`${DB.length} estudo(s)`;const l=document.getElementById("alist");if(!DB.length){l.innerHTML='<p style="color:var(--muted);text-align:center;padding:18px;font-size:.83rem">Nenhum estudo. Clique em "Novo".</p>';return;}l.innerHTML=DB.map(p=>{const c=CATS[p.cat]||CATS.eiv;return`<div class="pitem"><div class="piif"><div class="pit">${p.title}</div><div class="pim">${c.label} · ${p.year||"s/d"} · ${p.photos&&p.photos.length?p.photos.length+" foto(s)":"sem fotos"}</div></div><div class="piac"><button class="bsm be" onclick="editP('${p.id}')">✏ Editar</button><button class="bsm bd" onclick="delP('${p.id}')">✕</button></div></div>`;}).join("");}
+function refList(){document.getElementById("acnt").textContent=`${DB.length} estudo(s)`;const l=document.getElementById("alist");if(!DB.length){l.innerHTML='<p style="color:var(--muted);text-align:center;padding:18px;font-size:.83rem">Nenhum estudo. Clique em "Novo".</p>';return;}l.innerHTML='<p style="font-size:.72rem;color:var(--muted);margin-bottom:8px;text-align:center">↕ Arraste para reordenar</p>'+DB.map((p,idx)=>{const c=CATS[p.cat]||CATS.eiv;return`<div class="pitem" draggable="true" data-idx="${idx}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="dropItem(event)"><div style="color:var(--muted);cursor:grab;font-size:.9rem;padding-right:6px">⠿</div><div class="piif"><div class="pit">${p.title}</div><div class="pim">${c.label} · ${p.year||"s/d"} · ${p.photos&&p.photos.length?p.photos.length+" foto(s)":"sem fotos"}</div></div><div class="piac"><button class="bsm be" onclick="editP('${p.id}')">✏ Editar</button><button class="bsm bd" onclick="delP('${p.id}')">✕</button></div></div>`;}).join("");}
+let dragIdx=null;
+function dragStart(e){dragIdx=+e.currentTarget.dataset.idx;e.dataTransfer.effectAllowed="move";}
+function dragOver(e){e.preventDefault();e.dataTransfer.dropEffect="move";}
+function dropItem(e){e.preventDefault();const toIdx=+e.currentTarget.dataset.idx;if(dragIdx===null||dragIdx===toIdx)return;const item=DB.splice(dragIdx,1)[0];DB.splice(toIdx,0,item);saveDB();refList();}
+
 function clrForm(){eid=null;ppx=[];["fid","fti","fyr","fcl","flo","fde","fdl","fin","fsc","fre","ftg"].forEach(i=>document.getElementById(i)&&(document.getElementById(i).value=""));document.getElementById("fca").value="eiv";document.getElementById("pvg").innerHTML="";document.getElementById("eno").style.display="none";document.getElementById("acan").style.display="none";document.getElementById("adm-save-btn").style.display="";document.getElementById("adm-save-btn").disabled=false;document.getElementById("adm-save-btn").textContent="💾 Salvar";document.getElementById("tab-form-btn").textContent="➕ Novo";}
 function editP(id){const p=DB.find(x=>x.id===id);if(!p)return;clrForm();eid=id;document.getElementById("fti").value=p.title||"";document.getElementById("fca").value=p.cat||"eiv";document.getElementById("fyr").value=p.year||"";document.getElementById("fcl").value=p.client||"";document.getElementById("flo").value=p.loc||"";document.getElementById("fde").value=p.desc||"";document.getElementById("fdl").value=p.descl||"";document.getElementById("fin").value=p.infos||"";document.getElementById("fsc").value=p.scope||"";document.getElementById("fre").value=p.results||"";document.getElementById("ftg").value=p.tags||"";ppx=(p.photos||[]).map(url=>({url,file:null}));rvPrev();document.getElementById("eno").style.display="block";document.getElementById("acan").style.display="inline-flex";document.getElementById("tab-form-btn").textContent="✏ Editando";atab("form",document.getElementById("tab-form-btn"));}
 function delP(id){if(!confirm("Excluir este estudo?"))return;fbDeleteStudy(id);DB=DB.filter(p=>p.id!==id);localStorage.setItem(KEY,JSON.stringify(DB));refList();renderGrid(aCat());}
