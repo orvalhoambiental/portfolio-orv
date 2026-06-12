@@ -187,8 +187,8 @@ h2.t em{font-style:normal;color:var(--g500)}
 .ccs{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
 .cc{background:#fff;border-radius:14px;padding:16px 22px;display:flex;align-items:center;gap:12px;border:1.5px solid var(--border);transition:all .22s var(--ease);min-width:200px}
 .cc:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(20,40,8,.08);border-color:var(--g300)}
-.ccic{width:40px;height:40px;background:var(--g100);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
-.cclb{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--g700);margin-bottom:2px}
+.ccic{width:40px;height:40px;background:var(--g800);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
+.cclb{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.75);margin-bottom:2px}
 .ccvl{font-size:.84rem;color:var(--g800);font-weight:500}
 
 /* ═══ FOOTER ═══ */
@@ -387,15 +387,18 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
       <div class="ey">Quem somos</div>
       <h2 class="t">Conectando negócios à natureza de maneira <em>inteligente e responsável</em></h2>
       <p class="sdesc">A Orvalho desenvolve estudos ambientais para empreendedores, construtoras e investidores que precisam entender o que uma área permite, o que ela exige e como avançar com segurança.</p>
-      <p class="sdesc" style="margin-top:14px">Acreditamos que desenvolvimento e conservação caminham juntos — e trabalhamos para que nossos clientes tomem decisões com informação de qualidade.</p>
+      <ul class="sli" style="margin-top:18px">
+        <li>Acreditamos que desenvolvimento e conservação caminham juntos</li>
+        <li>Decisões com informação técnica de qualidade</li>
+        <li>Atuamos em SC, RS, SP e MG</li>
+      </ul>
     </div>
     <div class="sc rv d1">
       <div class="sc-ic">🤝</div>
       <h3>Atendimento personalizado em cada etapa</h3>
-      <p>Trabalhamos de forma próxima ao cliente desde o primeiro contato. Entendemos a demanda, planejamos as atividades necessárias, executamos os levantamentos e entregamos a documentação técnica com clareza e dentro do prazo.</p>
-      <p>Atuamos em Santa Catarina, Rio Grande do Sul, São Paulo e Minas Gerais.</p>
-      <div class="pills">
-        <span class="pill">SC, RS, SP e MG</span>
+      <p>Trabalhamos de forma próxima ao cliente desde o primeiro contato — entendemos a demanda, planejamos as atividades e entregamos a documentação técnica com clareza e dentro do prazo.</p>
+      <div class="pills" style="margin-top:22px">
+        <span class="pill">SC · RS · SP · MG</span>
         <span class="pill">Prazo e qualidade</span>
       </div>
     </div>
@@ -661,11 +664,28 @@ async function fbSaveCL(logos){
   // logos já são URLs do Storage (ou null)
   await window._setDoc(window._doc(window._db,"config","clientes"),{logos});
 }
+async function fbSaveOrder(){
+  if(!window._fbReady)return;
+  const ids=DB.map(p=>p.id);
+  await window._setDoc(window._doc(window._db,"config","order"),{ids});
+  localStorage.setItem("orvalho_order",JSON.stringify(ids));
+}
 async function fbLoadAll(){
   if(!window._fbReady)return;
   try{
     const snap=await window._getDocs(window._collection(window._db,"studies"));
     DB=[];snap.forEach(d=>DB.push(d.data()));
+    // Carregar ordem salva
+    const orderDoc=await window._getDoc(window._doc(window._db,"config","order"));
+    if(orderDoc.exists()){
+      const ids=orderDoc.data().ids||[];
+      // Reordenar DB conforme a ordem salva
+      const map={};DB.forEach(p=>map[p.id]=p);
+      const ordered=ids.map(id=>map[id]).filter(Boolean);
+      // Projetos novos não incluídos na ordem ficam no final
+      const remaining=DB.filter(p=>!ids.includes(p.id));
+      DB=[...ordered,...remaining];
+    }
     if(DB.length)localStorage.setItem(KEY,JSON.stringify(DB));
     const cl=await window._getDoc(window._doc(window._db,"config","clientes"));
     if(cl.exists()){CLLogos=cl.data().logos||[];localStorage.setItem(CL_KEY,JSON.stringify(CLLogos));}
@@ -832,20 +852,20 @@ async function removeCL(i){
   localStorage.setItem(CL_KEY,JSON.stringify(CLLogos));
   renderClientes();
 }
-function openAdm(){document.getElementById("abg").classList.add("open");document.getElementById("ap").classList.add("open");document.querySelector(".badm").classList.add("on");if(logged){refList();renderClientes();}}
+function openAdm(){document.getElementById("abg").classList.add("open");document.getElementById("ap").classList.add("open");document.querySelector(".badm").classList.add("on");if(logged){const sv=document.getElementById("adm-save-btn");if(sv)sv.style.display="none";refList();renderClientes();}}
 function closeAdm(){document.getElementById("abg").classList.remove("open");document.getElementById("ap").classList.remove("open");document.querySelector(".badm").classList.remove("on");}
-function doLogin(){if(document.getElementById("apass").value===PWD){logged=true;document.getElementById("alog").style.display="none";document.getElementById("aok").style.display="flex";refList();renderClientes();}else{document.getElementById("lerr").textContent="Senha incorreta.";document.getElementById("apass").value="";document.getElementById("apass").focus();}}
-function atab(n,b){document.querySelectorAll(".atb").forEach(t=>t.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".asc").forEach(s=>s.classList.remove("on"));document.getElementById("as-"+n).classList.add("on");const sv=document.getElementById("adm-save-btn"),cn=document.getElementById("acan");if(n==="cl"){sv.style.display="none";cn.style.display="none";}else{sv.style.display="";}}
+function doLogin(){if(document.getElementById("apass").value===PWD){logged=true;document.getElementById("alog").style.display="none";document.getElementById("aok").style.display="flex";const sv=document.getElementById("adm-save-btn");if(sv)sv.style.display="none";refList();renderClientes();}else{document.getElementById("lerr").textContent="Senha incorreta.";document.getElementById("apass").value="";document.getElementById("apass").focus();}}
+function atab(n,b){document.querySelectorAll(".atb").forEach(t=>t.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".asc").forEach(s=>s.classList.remove("on"));document.getElementById("as-"+n).classList.add("on");const sv=document.getElementById("adm-save-btn"),cn=document.getElementById("acan");if(n==="cl"||n==="list"){sv.style.display="none";cn.style.display="none";}else{sv.style.display="";if(eid)cn.style.display="inline-flex";}}
 function refList(){document.getElementById("acnt").textContent=`${DB.length} estudo(s)`;const l=document.getElementById("alist");if(!DB.length){l.innerHTML='<p style="color:var(--muted);text-align:center;padding:18px;font-size:.83rem">Nenhum estudo. Clique em "Novo".</p>';return;}l.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><p style="font-size:.72rem;color:var(--muted);margin:0">↕ Arraste para reordenar</p><button class="bsm be" id="save-order-btn" onclick="saveOrder()" style="display:none">💾 Salvar ordem</button></div>'+DB.map((p,idx)=>{const c=CATS[p.cat]||CATS.eiv;return`<div class="pitem" draggable="true" data-idx="${idx}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="dropItem(event)"><div style="color:var(--muted);cursor:grab;font-size:.9rem;padding-right:6px">⠿</div><div class="piif"><div class="pit">${p.title}</div><div class="pim">${c.label} · ${p.year||"s/d"} · ${p.photos&&p.photos.length?p.photos.length+" foto(s)":"sem fotos"}</div></div><div class="piac"><button class="bsm be" onclick="editP('${p.id}')">✏ Editar</button><button class="bsm bd" onclick="delP('${p.id}')">✕</button></div></div>`;}).join("");}
 let dragIdx=null;
 function dragStart(e){dragIdx=+e.currentTarget.dataset.idx;e.dataTransfer.effectAllowed="move";}
 function dragOver(e){e.preventDefault();e.dataTransfer.dropEffect="move";}
 function dropItem(e){e.preventDefault();const toIdx=+e.currentTarget.dataset.idx;if(dragIdx===null||dragIdx===toIdx)return;const item=DB.splice(dragIdx,1)[0];DB.splice(toIdx,0,item);dragIdx=null;refList();const btn=document.getElementById("save-order-btn");if(btn)btn.style.display="inline-flex";}
-function saveOrder(){localStorage.setItem(KEY,JSON.stringify(DB));DB.forEach(p=>fbSaveStudy(p));renderGrid(aCat());const btn=document.getElementById("save-order-btn");if(btn){btn.textContent="✓ Salvo!";btn.disabled=true;setTimeout(()=>{btn.textContent="💾 Salvar ordem";btn.disabled=false;btn.style.display="none";},2000);}}
+async function saveOrder(){const btn=document.getElementById("save-order-btn");if(btn){btn.textContent="⏳ Salvando...";btn.disabled=true;}localStorage.setItem(KEY,JSON.stringify(DB));try{await fbSaveOrder();}catch(e){console.warn("Erro ao salvar ordem:",e);}renderGrid(aCat());if(btn){btn.textContent="✓ Ordem salva!";setTimeout(()=>{btn.textContent="💾 Salvar ordem";btn.disabled=false;btn.style.display="none";},2200);}}
 
 function clrForm(){eid=null;ppx=[];["fid","fti","fyr","fcl","flo","fde","fdl","fin","fsc","fre","ftg"].forEach(i=>document.getElementById(i)&&(document.getElementById(i).value=""));document.getElementById("fca").value="eiv";document.getElementById("pvg").innerHTML="";document.getElementById("eno").style.display="none";document.getElementById("acan").style.display="none";document.getElementById("adm-save-btn").style.display="";document.getElementById("adm-save-btn").disabled=false;document.getElementById("adm-save-btn").textContent="💾 Salvar";document.getElementById("tab-form-btn").textContent="➕ Novo";}
 function editP(id){const p=DB.find(x=>x.id===id);if(!p)return;clrForm();eid=id;document.getElementById("fti").value=p.title||"";document.getElementById("fca").value=p.cat||"eiv";document.getElementById("fyr").value=p.year||"";document.getElementById("fcl").value=p.client||"";document.getElementById("flo").value=p.loc||"";document.getElementById("fde").value=p.desc||"";document.getElementById("fdl").value=p.descl||"";document.getElementById("fin").value=p.infos||"";document.getElementById("fsc").value=p.scope||"";document.getElementById("fre").value=p.results||"";document.getElementById("ftg").value=p.tags||"";ppx=(p.photos||[]).map(url=>({url,file:null}));rvPrev();document.getElementById("eno").style.display="block";document.getElementById("acan").style.display="inline-flex";document.getElementById("tab-form-btn").textContent="✏ Editando";atab("form",document.getElementById("tab-form-btn"));}
-function delP(id){if(!confirm("Excluir este estudo?"))return;fbDeleteStudy(id);DB=DB.filter(p=>p.id!==id);localStorage.setItem(KEY,JSON.stringify(DB));refList();renderGrid(aCat());}
+async function delP(id){if(!confirm("Excluir este estudo?"))return;await fbDeleteStudy(id);DB=DB.filter(p=>p.id!==id);localStorage.setItem(KEY,JSON.stringify(DB));await fbSaveOrder();refList();renderGrid(aCat());}
 function cancelEdit(){clrForm();atab("list",document.getElementById("tab-list-btn"));}
 async function saveProj(){
   const ti=document.getElementById("fti").value.trim();
@@ -870,6 +890,7 @@ async function saveProj(){
     const proj={id,cat:document.getElementById("fca").value,year:document.getElementById("fyr").value.trim(),title:ti,client:document.getElementById("fcl").value.trim(),loc:document.getElementById("flo").value.trim(),desc:document.getElementById("fde").value.trim(),descl:document.getElementById("fdl").value.trim(),infos:document.getElementById("fin").value.trim(),scope:document.getElementById("fsc").value.trim(),results:document.getElementById("fre").value.trim(),tags:document.getElementById("ftg").value.trim(),photos:finalPhotos};
     if(eid){const i=DB.findIndex(p=>p.id===eid);if(i>-1)DB[i]=proj;else DB.unshift(proj);}else DB.unshift(proj);
     await fbSaveStudy(proj);
+    await fbSaveOrder(); // mantém a ordem no Firebase
     localStorage.setItem(KEY,JSON.stringify(DB));
     clrForm();refList();renderGrid(aCat());atab("list",document.getElementById("tab-list-btn"));
     saveBtn.disabled=false;saveBtn.textContent="💾 Salvar";
