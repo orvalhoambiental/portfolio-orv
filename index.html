@@ -559,6 +559,7 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
       <button class="atb on" id="tab-list-btn" onclick="atab('list',this)">📋 Estudos</button>
       <button class="atb" id="tab-form-btn" onclick="atab('form',this)">➕ Novo</button>
       <button class="atb" id="tab-cl-btn" onclick="atab('cl',this)">🏢 Clientes</button>
+      <button class="atb" id="tab-pdf-btn" onclick="atab('pdf',this)">📄 PDF</button>
     </div>
     <div class="abdy">
       <div class="asc on" id="as-list">
@@ -606,6 +607,25 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
         <div class="no ni" style="margin-bottom:14px">Adicione as logos dos clientes clicando em cada slot.</div>
         <div style="display:flex;flex-direction:column;gap:10px" id="cl-admin"></div>
       </div>
+      <div class="asc" id="as-pdf">
+        <div class="no ni" style="margin-bottom:16px">📥 Gera um PDF completo e profissional do portfólio.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+          <label style="display:flex;align-items:center;gap:9px;font-size:.85rem;color:var(--ink);cursor:pointer">
+            <input type="checkbox" id="pdf-opt-capa" checked style="accent-color:var(--g700);width:15px;height:15px"> Capa institucional
+          </label>
+          <label style="display:flex;align-items:center;gap:9px;font-size:.85rem;color:var(--ink);cursor:pointer">
+            <input type="checkbox" id="pdf-opt-servicos" checked style="accent-color:var(--g700);width:15px;height:15px"> Página de serviços
+          </label>
+          <label style="display:flex;align-items:center;gap:9px;font-size:.85rem;color:var(--ink);cursor:pointer">
+            <input type="checkbox" id="pdf-opt-projetos" checked style="accent-color:var(--g700);width:15px;height:15px"> Estudos de caso (todos os projetos)
+          </label>
+          <label style="display:flex;align-items:center;gap:9px;font-size:.85rem;color:var(--ink);cursor:pointer">
+            <input type="checkbox" id="pdf-opt-clientes" checked style="accent-color:var(--g700);width:15px;height:15px"> Clientes atendidos
+          </label>
+        </div>
+        <button class="btn bm" id="pdf-gen-btn" onclick="gerarPDF()" style="width:100%;justify-content:center">📥 Gerar e baixar PDF</button>
+        <p id="pdf-status" style="margin-top:12px;font-size:.78rem;color:var(--muted);text-align:center;min-height:18px;line-height:1.5"></p>
+      </div>
     </div>
     <div class="adf">
       <button class="btn bm" id="adm-save-btn" onclick="saveProj()" style="flex:1;justify-content:center">💾 Salvar</button>
@@ -614,6 +634,8 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
   </div>
 </div>
 
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -853,7 +875,7 @@ async function removeCL(i){
 function openAdm(){document.getElementById("abg").classList.add("open");document.getElementById("ap").classList.add("open");document.querySelector(".badm").classList.add("on");if(logged){const sv=document.getElementById("adm-save-btn");if(sv)sv.style.display="none";refList();renderClientes();}}
 function closeAdm(){document.getElementById("abg").classList.remove("open");document.getElementById("ap").classList.remove("open");document.querySelector(".badm").classList.remove("on");}
 function doLogin(){if(document.getElementById("apass").value===PWD){logged=true;document.getElementById("alog").style.display="none";document.getElementById("aok").style.display="flex";const sv=document.getElementById("adm-save-btn");if(sv)sv.style.display="none";refList();renderClientes();}else{document.getElementById("lerr").textContent="Senha incorreta.";document.getElementById("apass").value="";document.getElementById("apass").focus();}}
-function atab(n,b){document.querySelectorAll(".atb").forEach(t=>t.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".asc").forEach(s=>s.classList.remove("on"));document.getElementById("as-"+n).classList.add("on");const sv=document.getElementById("adm-save-btn"),cn=document.getElementById("acan");if(n==="cl"||n==="list"){sv.style.display="none";cn.style.display="none";}else{sv.style.display="";if(eid)cn.style.display="inline-flex";}}
+function atab(n,b){document.querySelectorAll(".atb").forEach(t=>t.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".asc").forEach(s=>s.classList.remove("on"));document.getElementById("as-"+n).classList.add("on");const sv=document.getElementById("adm-save-btn"),cn=document.getElementById("acan");if(n==="cl"||n==="list"||n==="pdf"){sv.style.display="none";cn.style.display="none";}else{sv.style.display="";if(eid)cn.style.display="inline-flex";}}
 function refList(){document.getElementById("acnt").textContent=`${DB.length} estudo(s)`;const l=document.getElementById("alist");if(!DB.length){l.innerHTML='<p style="color:var(--muted);text-align:center;padding:18px;font-size:.83rem">Nenhum estudo. Clique em "Novo".</p>';return;}l.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><p style="font-size:.72rem;color:var(--muted);margin:0">↕ Arraste para reordenar</p><button class="bsm be" id="save-order-btn" onclick="saveOrder()" style="display:none">💾 Salvar ordem</button></div>'+DB.map((p,idx)=>{const c=CATS[p.cat]||CATS.eiv;return`<div class="pitem" draggable="true" data-idx="${idx}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="dropItem(event)"><div style="color:var(--muted);cursor:grab;font-size:.9rem;padding-right:6px">⠿</div><div class="piif"><div class="pit">${p.title}</div><div class="pim">${c.label} · ${p.year||"s/d"} · ${p.photos&&p.photos.length?p.photos.length+" foto(s)":"sem fotos"}</div></div><div class="piac"><button class="bsm be" onclick="editP('${p.id}')">✏ Editar</button><button class="bsm bd" onclick="delP('${p.id}')">✕</button></div></div>`;}).join("");}
 let dragIdx=null;
 function dragStart(e){dragIdx=+e.currentTarget.dataset.idx;e.dataTransfer.effectAllowed="move";}
@@ -919,6 +941,274 @@ function dol(){document.getElementById("dz").classList.remove("dov");}
 function ddr(e){e.preventDefault();dol();hf(e.dataTransfer.files);}
 function obsRv(){const obs=new IntersectionObserver((es)=>{es.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add("on"),i*70);obs.unobserve(e.target);}});},{threshold:.06});document.querySelectorAll(".rv:not(.on)").forEach(el=>obs.observe(el));}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeAdm();}});
+
+// ── GERADOR DE PDF ──
+async function gerarPDF(){
+  if(typeof window.jspdf==="undefined"){alert("Biblioteca PDF ainda carregando, tente em 2 segundos.");return;}
+  const {jsPDF}=window.jspdf;
+  const btn=document.getElementById("pdf-gen-btn");
+  const status=document.getElementById("pdf-status");
+  btn.disabled=true; btn.textContent="⏳ Gerando PDF...";
+  const setStatus=t=>{if(status)status.textContent=t;};
+
+  const optCapa=document.getElementById("pdf-opt-capa").checked;
+  const optSvc=document.getElementById("pdf-opt-servicos").checked;
+  const optProj=document.getElementById("pdf-opt-projetos").checked;
+  const optCli=document.getElementById("pdf-opt-clientes").checked;
+
+  // cores da marca
+  const VERDE=[40,93,2],VERDE_L=[154,191,74],CINZA=[77,96,85],PRETO=[26,42,14];
+  const W=210,H=297; // A4 mm
+
+  const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  let pg=0;
+
+  function novaPage(){if(pg>0)doc.addPage();pg++;
+    // rodapé em todas as páginas
+    doc.setFillColor(...VERDE);doc.rect(0,H-10,W,10,"F");
+    doc.setFontSize(7);doc.setTextColor(255,255,255);
+    doc.text("Orvalho Consultoria Ambiental  ·  orvalhoambiental.com.br",W/2,H-3.5,{align:"center"});
+    doc.setTextColor(...PRETO);
+  }
+
+  // helper: carrega imagem como dataURL via proxy CORS
+  async function loadImg(url){
+    return new Promise(resolve=>{
+      const img=new Image();img.crossOrigin="anonymous";
+      img.onload=()=>{
+        const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;
+        c.getContext("2d").drawImage(img,0,0);
+        resolve({data:c.toDataURL("image/jpeg",0.85),w:img.naturalWidth,h:img.naturalHeight});
+      };
+      img.onerror=()=>resolve(null);
+      img.src=url;
+    });
+  }
+
+  // helper: texto multiline com quebra automática
+  function mlText(txt,x,y,maxW,lineH){
+    const lines=doc.splitTextToSize(txt,maxW);
+    doc.text(lines,x,y);return y+lines.length*lineH;
+  }
+
+  // ── CAPA ──
+  if(optCapa){
+    novaPage();
+    // fundo verde topo
+    doc.setFillColor(...VERDE);doc.rect(0,0,W,80,"F");
+    // listras decorativas
+    doc.setFillColor(...VERDE_L);doc.setGState(new doc.GState({opacity:0.3}));
+    doc.rect(0,60,W,4,"F");doc.rect(0,66,W,2,"F");
+    doc.setGState(new doc.GState({opacity:1}));
+
+    // logo (tenta carregar, senão usa texto)
+    const logoEl=document.querySelector(".hlogo img");
+    if(logoEl && logoEl.src){
+      setStatus("Carregando logo...");
+      const lg=await loadImg(logoEl.src);
+      if(lg){
+        const lw=60,lh=lw*(lg.h/lg.w);
+        doc.addImage(lg.data,"JPEG",(W-lw)/2,14,lw,lh);
+      }else{
+        doc.setFontSize(22);doc.setFont(undefined,"bold");doc.setTextColor(255,255,255);
+        doc.text("Orvalho",W/2,35,{align:"center"});
+      }
+    }
+
+    // título portfólio
+    doc.setFontSize(11);doc.setFont(undefined,"normal");doc.setTextColor(200,230,140);
+    doc.text("PORTFÓLIO DE SERVIÇOS",W/2,72,{align:"center"});
+
+    // bloco branco principal
+    doc.setFillColor(255,255,255);doc.roundedRect(20,88,170,130,4,4,"F");
+    doc.setDrawColor(...VERDE_L);doc.setLineWidth(0.4);doc.roundedRect(20,88,170,130,4,4,"S");
+
+    doc.setFontSize(18);doc.setFont(undefined,"bold");doc.setTextColor(...VERDE);
+    doc.text("Orvalho Consultoria Ambiental",W/2,106,{align:"center"});
+
+    doc.setDrawColor(...VERDE_L);doc.setLineWidth(0.8);doc.line(50,110,160,110);
+
+    doc.setFontSize(10);doc.setFont(undefined,"normal");doc.setTextColor(...CINZA);
+    const sobre="Somos uma consultoria ambiental especializada em estudos, diagnósticos e projetos que conciliam desenvolvimento econômico e preservação do meio ambiente. Atuamos em todo o território nacional com equipe multidisciplinar e metodologia própria.";
+    mlText(sobre,35,122,140,5.5);
+
+    // chips de especialidades
+    const chips=["EIV / RIV","Flora & Fauna","Estudos Ambientais","Educação Ambiental","Licenciamento"];
+    let cx=30,cy=162;
+    doc.setFontSize(8);
+    chips.forEach(ch=>{
+      const tw=doc.getTextWidth(ch)+8;
+      if(cx+tw>180){cx=30;cy+=10;}
+      doc.setFillColor(...VERDE_L);doc.setDrawColor(...VERDE);doc.setLineWidth(0.3);
+      doc.roundedRect(cx,cy-5,tw,7,2,2,"FD");
+      doc.setTextColor(...VERDE);doc.text(ch,cx+4,cy);
+      cx+=tw+4;
+    });
+
+    // contato
+    doc.setFillColor(245,249,236);doc.rect(20,222,170,22,"F");
+    doc.setFontSize(8);doc.setTextColor(...CINZA);
+    doc.text("📧  contato@orvalhoambiental.com.br",W/2,231,{align:"center"});
+    doc.text("🌐  orvalhoambiental.com.br   ·   📱  WhatsApp disponível",W/2,239,{align:"center"});
+
+    // ano
+    doc.setFontSize(8);doc.setTextColor(...CINZA);
+    doc.text(new Date().getFullYear().toString(),W/2,H-14,{align:"center"});
+  }
+
+  // ── SERVIÇOS ──
+  if(optSvc){
+    novaPage();
+    doc.setFillColor(...VERDE);doc.rect(0,0,W,22,"F");
+    doc.setFontSize(14);doc.setFont(undefined,"bold");doc.setTextColor(255,255,255);
+    doc.text("Nossos Serviços",W/2,14,{align:"center"});
+
+    const servicos=[
+      {icon:"🏙️",titulo:"EIV / RIV",desc:"Estudo e Relatório de Impacto de Vizinhança conforme o Estatuto da Cidade (Lei 10.257/2001), com análise dos meios físico, biótico e socioeconômico."},
+      {icon:"🌳",titulo:"Flora",desc:"Levantamento fitossociológico, inventário florestal, diagnóstico de vegetação nativa, APPs e reserva legal conforme o Código Florestal."},
+      {icon:"🦋",titulo:"Fauna",desc:"Monitoramento e diagnóstico de fauna silvestre, levantamento de mastofauna, avifauna, herpetofauna e ictiofauna."},
+      {icon:"📄",titulo:"Estudos Ambientais",desc:"EIA/RIMA, PBA, RAP, diagnósticos ambientais, laudos técnicos e relatórios para processos de licenciamento ambiental."},
+      {icon:"📚",titulo:"Educação Ambiental",desc:"Programas de educação ambiental, oficinas, treinamentos e materiais didáticos para empresas, escolas e comunidades."},
+      {icon:"🌿",titulo:"Licenciamento Ambiental",desc:"Assessoria completa nos processos de licenciamento junto a órgãos estaduais e federais (IBAMA, CETESB, IAT e outros)."},
+    ];
+
+    let sy=30;
+    servicos.forEach((s,i)=>{
+      const col=i%2,row=Math.floor(i/2);
+      const sx=col===0?15:110,sy2=30+row*50;
+      doc.setFillColor(245,249,236);doc.roundedRect(sx,sy2,90,44,"F");
+      doc.setDrawColor(...VERDE_L);doc.setLineWidth(0.3);doc.roundedRect(sx,sy2,90,44,"S");
+      doc.setFillColor(...VERDE);doc.rect(sx,sy2,3,44,"F");
+      doc.setFontSize(9);doc.setFont(undefined,"bold");doc.setTextColor(...VERDE);
+      doc.text(s.icon+" "+s.titulo,sx+6,sy2+9);
+      doc.setFontSize(7.5);doc.setFont(undefined,"normal");doc.setTextColor(...CINZA);
+      const lines=doc.splitTextToSize(s.desc,78);
+      doc.text(lines,sx+6,sy2+17);
+    });
+  }
+
+  // ── PROJETOS ──
+  if(optProj && DB.length){
+    setStatus(`Processando ${DB.length} projeto(s)...`);
+    // cabeçalho da seção
+    novaPage();
+    doc.setFillColor(...VERDE);doc.rect(0,0,W,22,"F");
+    doc.setFontSize(14);doc.setFont(undefined,"bold");doc.setTextColor(255,255,255);
+    doc.text("Estudos de Caso",W/2,14,{align:"center"});
+
+    let py=30;const PH=55; // altura de cada card de projeto
+    for(let i=0;i<DB.length;i++){
+      const p=DB[i];
+      const c=CATS[p.cat]||CATS.eiv;
+      setStatus(`Projeto ${i+1}/${DB.length}: ${p.title.substring(0,30)}...`);
+
+      // nova página se não couber
+      if(py+PH>H-18){novaPage();py=28;}
+
+      // card fundo
+      doc.setFillColor(250,252,246);doc.roundedRect(12,py,186,PH-2,3,3,"F");
+      doc.setDrawColor(...VERDE_L);doc.setLineWidth(0.3);doc.roundedRect(12,py,186,PH-2,3,3,"S");
+
+      // barra lateral colorida
+      doc.setFillColor(...VERDE);doc.roundedRect(12,py,4,PH-2,2,2,"F");
+
+      // foto (se tiver)
+      let textX=20,textW=148;
+      if(p.photos&&p.photos[0]){
+        const imgData=await loadImg(p.photos[0]);
+        if(imgData){
+          const ih=PH-8,iw=ih*(imgData.w/imgData.h);
+          const finalW=Math.min(iw,36);
+          doc.addImage(imgData.data,"JPEG",W-12-finalW,py+4,finalW,ih-4);
+          textW=148-finalW-4;
+        }
+      }
+
+      // categoria badge
+      doc.setFillColor(...VERDE_L);doc.roundedRect(textX,py+4,doc.getTextWidth(c.label)+6,6,2,2,"F");
+      doc.setFontSize(6.5);doc.setFont(undefined,"bold");doc.setTextColor(...VERDE);
+      doc.text(c.label,textX+3,py+8.5);
+
+      // ano
+      if(p.year){doc.setFontSize(6.5);doc.setFont(undefined,"normal");doc.setTextColor(...CINZA);doc.text(p.year,textX+doc.getTextWidth(c.label)+14,py+8.5);}
+
+      // título
+      doc.setFontSize(9);doc.setFont(undefined,"bold");doc.setTextColor(...PRETO);
+      const titleLines=doc.splitTextToSize(p.title,textW);
+      doc.text(titleLines,textX,py+18);
+      let ty=py+18+titleLines.length*5;
+
+      // cliente e local
+      if(p.client||p.loc){
+        doc.setFontSize(7.5);doc.setFont(undefined,"normal");doc.setTextColor(...CINZA);
+        const meta=[p.client,p.loc].filter(Boolean).join("  ·  ");
+        doc.text(meta,textX,ty);ty+=5;
+      }
+
+      // descrição
+      if(p.desc){
+        doc.setFontSize(7.5);doc.setTextColor(...CINZA);
+        const dlines=doc.splitTextToSize(p.desc,textW);
+        const show=dlines.slice(0,2);
+        doc.text(show,textX,ty+1);
+      }
+
+      // infos-chave
+      if(p.infos){
+        const infos=p.infos.split("|").map(s=>s.trim()).filter(Boolean).slice(0,3);
+        let ix=textX,iy=py+PH-8;
+        doc.setFontSize(6.5);
+        infos.forEach(inf=>{
+          const tw=doc.getTextWidth(inf)+6;
+          if(ix+tw>textX+textW)return;
+          doc.setFillColor(234,242,208);doc.roundedRect(ix,iy-4,tw,5.5,1.5,1.5,"F");
+          doc.setTextColor(...VERDE);doc.text(inf,ix+3,iy);
+          ix+=tw+3;
+        });
+      }
+
+      py+=PH+2;
+    }
+  }
+
+  // ── CLIENTES ──
+  if(optCli){
+    const logos=CLLogos.filter(Boolean);
+    novaPage();
+    doc.setFillColor(...VERDE);doc.rect(0,0,W,22,"F");
+    doc.setFontSize(14);doc.setFont(undefined,"bold");doc.setTextColor(255,255,255);
+    doc.text("Clientes Atendidos",W/2,14,{align:"center"});
+
+    if(logos.length){
+      setStatus("Carregando logos dos clientes...");
+      const cols=3,gap=8,lw=(W-30-(cols-1)*gap)/cols,lh=28;
+      let lx=15,ly=32;
+      for(let i=0;i<logos.length;i++){
+        if(i>0&&i%cols===0){lx=15;ly+=lh+gap;}
+        const imgD=await loadImg(logos[i]);
+        doc.setFillColor(250,252,246);doc.roundedRect(lx,ly,lw,lh,3,3,"F");
+        doc.setDrawColor(...VERDE_L);doc.setLineWidth(0.3);doc.roundedRect(lx,ly,lw,lh,3,3,"S");
+        if(imgD){
+          const scale=Math.min((lw-8)/imgD.w,(lh-8)/imgD.h);
+          const dw=imgD.w*scale,dh=imgD.h*scale;
+          doc.addImage(imgD.data,"JPEG",lx+(lw-dw)/2,ly+(lh-dh)/2,dw,dh);
+        }
+        lx+=lw+gap;
+      }
+    }else{
+      doc.setFontSize(10);doc.setTextColor(...CINZA);
+      doc.text("Nenhum logo de cliente cadastrado.",W/2,60,{align:"center"});
+    }
+  }
+
+  // salva
+  setStatus("Finalizando...");
+  const nome=`orvalho-portfolio-${new Date().toISOString().slice(0,10)}.pdf`;
+  doc.save(nome);
+  btn.disabled=false;btn.textContent="📥 Gerar e baixar PDF";
+  setStatus(`✅ PDF gerado: ${nome}`);
+}
+
 loadDB();renderGrid();renderClientes();obsRv();
 </script>
 </body>
