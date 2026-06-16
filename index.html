@@ -971,16 +971,22 @@ async function gerarPDF(){
     doc.setTextColor(...PRETO);
   }
 
-  // helper: carrega imagem como dataURL via proxy CORS
+  // helper: carrega imagem como dataURL com timeout para evitar travamento por CORS
   async function loadImg(url){
+    if(!url) return null;
     return new Promise(resolve=>{
+      let done=false;
+      const finish=v=>{if(!done){done=true;clearTimeout(timer);resolve(v);}};
+      const timer=setTimeout(()=>finish(null), 5000); // desiste após 5s
       const img=new Image();img.crossOrigin="anonymous";
       img.onload=()=>{
-        const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;
-        c.getContext("2d").drawImage(img,0,0);
-        resolve({data:c.toDataURL("image/jpeg",0.85),w:img.naturalWidth,h:img.naturalHeight});
+        try{
+          const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;
+          c.getContext("2d").drawImage(img,0,0);
+          finish({data:c.toDataURL("image/jpeg",0.85),w:img.naturalWidth,h:img.naturalHeight});
+        }catch(e){finish(null);}
       };
-      img.onerror=()=>resolve(null);
+      img.onerror=()=>finish(null);
       img.src=url;
     });
   }
