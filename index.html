@@ -971,24 +971,36 @@ async function gerarPDF(){
     doc.setTextColor(...PRETO);
   }
 
-  // helper: carrega imagem como dataURL com timeout para evitar travamento por CORS
+  // helper: carrega imagem via fetch+blob (evita bloqueio CORS do canvas com Cloudinary)
   async function loadImg(url){
     if(!url) return null;
-    return new Promise(resolve=>{
-      let done=false;
-      const finish=v=>{if(!done){done=true;clearTimeout(timer);resolve(v);}};
-      const timer=setTimeout(()=>finish(null), 5000); // desiste após 5s
-      const img=new Image();img.crossOrigin="anonymous";
-      img.onload=()=>{
-        try{
-          const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;
-          c.getContext("2d").drawImage(img,0,0);
-          finish({data:c.toDataURL("image/jpeg",0.85),w:img.naturalWidth,h:img.naturalHeight});
-        }catch(e){finish(null);}
-      };
-      img.onerror=()=>finish(null);
-      img.src=url;
-    });
+    try{
+      let fetchUrl=url;
+      // Para Cloudinary: w_800 reduz tamanho, fl_attachment forca CORS correto
+      if(url.includes("cloudinary.com")&&url.includes("/upload/")){
+        // Remove transformacoes existentes e aplica as nossas (menor e com CORS)
+        fetchUrl=url.replace(/\/upload\/(?:[^/]+\/)?/,"/upload/w_800,q_80,f_jpg,fl_attachment/");
+      }
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort(),8000);
+      const res=await fetch(fetchUrl,{signal:ctrl.signal});
+      clearTimeout(timer);
+      if(!res.ok) return null;
+      const blob=await res.blob();
+      return await new Promise(resolve=>{
+        const reader=new FileReader();
+        reader.onload=()=>{
+          const img=new Image();
+          img.onload=()=>resolve({data:reader.result,w:img.naturalWidth,h:img.naturalHeight});
+          img.onerror=()=>resolve({data:reader.result,w:200,h:150});
+          img.src=reader.result;
+        };
+        reader.onerror=()=>resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    }catch(e){
+      return null;
+    }
   }
 
   // helper: texto multiline com quebra automática
