@@ -1009,6 +1009,11 @@ async function gerarPDF(){
     doc.text(lines,x,y);return y+lines.length*lineH;
   }
 
+  // ── PRÉ-CARREGA LOGO DA CAPA ──
+  const logoEl=document.querySelector(".hlogo img");
+  const lgPromise=logoEl&&logoEl.src ? loadImg(logoEl.src) : Promise.resolve(null);
+  // (fotos dos projetos e logos de clientes são carregados nas suas seções em paralelo)
+
   // ── CAPA ──
   if(optCapa){
     novaPage();
@@ -1019,11 +1024,10 @@ async function gerarPDF(){
     doc.rect(0,60,W,4,"F");doc.rect(0,66,W,2,"F");
     doc.setGState(new doc.GState({opacity:1}));
 
-    // logo (tenta carregar, senão usa texto)
-    const logoEl=document.querySelector(".hlogo img");
+    // logo (já sendo carregado em paralelo)
     if(logoEl && logoEl.src){
-      setStatus("Carregando logo...");
-      const lg=await loadImg(logoEl.src);
+      setStatus("Aguardando logo...");
+      const lg=await lgPromise;
       if(lg){
         const lw=60,lh=lw*(lg.h/lg.w);
         doc.addImage(lg.data,"JPEG",(W-lw)/2,14,lw,lh);
@@ -1107,7 +1111,11 @@ async function gerarPDF(){
 
   // ── PROJETOS ──
   if(optProj && DB.length){
-    setStatus(`Processando ${DB.length} projeto(s)...`);
+    // Pré-carrega TODAS as imagens em paralelo antes de montar o PDF
+    setStatus(`Carregando imagens de ${DB.length} projeto(s) em paralelo...`);
+    const projImgUrls = DB.map(p => (p.photos && p.photos[0]) ? p.photos[0] : null);
+    const projImgs = await Promise.all(projImgUrls.map(u => loadImg(u)));
+
     // cabeçalho da seção
     novaPage();
     doc.setFillColor(...VERDE);doc.rect(0,0,W,22,"F");
@@ -1118,7 +1126,7 @@ async function gerarPDF(){
     for(let i=0;i<DB.length;i++){
       const p=DB[i];
       const c=CATS[p.cat]||CATS.eiv;
-      setStatus(`Projeto ${i+1}/${DB.length}: ${p.title.substring(0,30)}...`);
+      setStatus(`Montando projeto ${i+1}/${DB.length}...`);
 
       // nova página se não couber
       if(py+PH>H-18){novaPage();py=28;}
@@ -1130,16 +1138,14 @@ async function gerarPDF(){
       // barra lateral colorida
       doc.setFillColor(...VERDE);doc.roundedRect(12,py,4,PH-2,2,2,"F");
 
-      // foto (se tiver)
+      // foto (já carregada)
       let textX=20,textW=148;
-      if(p.photos&&p.photos[0]){
-        const imgData=await loadImg(p.photos[0]);
-        if(imgData){
-          const ih=PH-8,iw=ih*(imgData.w/imgData.h);
-          const finalW=Math.min(iw,36);
-          doc.addImage(imgData.data,"JPEG",W-12-finalW,py+4,finalW,ih-4);
-          textW=148-finalW-4;
-        }
+      const imgData=projImgs[i];
+      if(imgData){
+        const ih=PH-8,iw=ih*(imgData.w/imgData.h);
+        const finalW=Math.min(iw,36);
+        doc.addImage(imgData.data,"JPEG",W-12-finalW,py+4,finalW,ih-4);
+        textW=148-finalW-4;
       }
 
       // categoria badge
@@ -1198,12 +1204,13 @@ async function gerarPDF(){
     doc.text("Clientes Atendidos",W/2,14,{align:"center"});
 
     if(logos.length){
-      setStatus("Carregando logos dos clientes...");
+      setStatus("Carregando logos dos clientes em paralelo...");
+      const logoImgs=await Promise.all(logos.map(u=>loadImg(u)));
       const cols=3,gap=8,lw=(W-30-(cols-1)*gap)/cols,lh=28;
       let lx=15,ly=32;
       for(let i=0;i<logos.length;i++){
         if(i>0&&i%cols===0){lx=15;ly+=lh+gap;}
-        const imgD=await loadImg(logos[i]);
+        const imgD=logoImgs[i];
         doc.setFillColor(250,252,246);doc.roundedRect(lx,ly,lw,lh,3,3,"F");
         doc.setDrawColor(...VERDE_L);doc.setLineWidth(0.3);doc.roundedRect(lx,ly,lw,lh,3,3,"S");
         if(imgD){
