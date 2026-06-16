@@ -559,7 +559,6 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
       <button class="atb on" id="tab-list-btn" onclick="atab('list',this)">📋 Estudos</button>
       <button class="atb" id="tab-form-btn" onclick="atab('form',this)">➕ Novo</button>
       <button class="atb" id="tab-cl-btn" onclick="atab('cl',this)">🏢 Clientes</button>
-      <button class="atb" id="tab-pdf-btn" onclick="atab('pdf',this)">📄 PDF</button>
     </div>
     <div class="abdy">
       <div class="asc on" id="as-list">
@@ -607,25 +606,6 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
         <div class="no ni" style="margin-bottom:14px">Adicione as logos dos clientes clicando em cada slot.</div>
         <div style="display:flex;flex-direction:column;gap:10px" id="cl-admin"></div>
       </div>
-      <div class="asc" id="as-pdf">
-        <div class="no ni" style="margin-bottom:16px">📥 Gera um PDF completo e profissional do portfólio.</div>
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
-          <label style="display:flex;align-items:center;gap:9px;font-size:.85rem;color:var(--ink);cursor:pointer">
-            <input type="checkbox" id="pdf-opt-capa" checked style="accent-color:var(--g700);width:15px;height:15px"> Capa institucional
-          </label>
-          <label style="display:flex;align-items:center;gap:9px;font-size:.85rem;color:var(--ink);cursor:pointer">
-            <input type="checkbox" id="pdf-opt-servicos" checked style="accent-color:var(--g700);width:15px;height:15px"> Página de serviços
-          </label>
-          <label style="display:flex;align-items:center;gap:9px;font-size:.85rem;color:var(--ink);cursor:pointer">
-            <input type="checkbox" id="pdf-opt-projetos" checked style="accent-color:var(--g700);width:15px;height:15px"> Estudos de caso (todos os projetos)
-          </label>
-          <label style="display:flex;align-items:center;gap:9px;font-size:.85rem;color:var(--ink);cursor:pointer">
-            <input type="checkbox" id="pdf-opt-clientes" checked style="accent-color:var(--g700);width:15px;height:15px"> Clientes atendidos
-          </label>
-        </div>
-        <button class="btn bm" id="pdf-gen-btn" onclick="gerarPDF()" style="width:100%;justify-content:center">📥 Gerar e baixar PDF</button>
-        <p id="pdf-status" style="margin-top:12px;font-size:.78rem;color:var(--muted);text-align:center;min-height:18px;line-height:1.5"></p>
-      </div>
     </div>
     <div class="adf">
       <button class="btn bm" id="adm-save-btn" onclick="saveProj()" style="flex:1;justify-content:center">💾 Salvar</button>
@@ -634,8 +614,6 @@ footer p{font-size:.76rem;color:rgba(255,255,255,.3)}
   </div>
 </div>
 
-  <!-- jsPDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -875,7 +853,7 @@ async function removeCL(i){
 function openAdm(){document.getElementById("abg").classList.add("open");document.getElementById("ap").classList.add("open");document.querySelector(".badm").classList.add("on");if(logged){const sv=document.getElementById("adm-save-btn");if(sv)sv.style.display="none";refList();renderClientes();}}
 function closeAdm(){document.getElementById("abg").classList.remove("open");document.getElementById("ap").classList.remove("open");document.querySelector(".badm").classList.remove("on");}
 function doLogin(){if(document.getElementById("apass").value===PWD){logged=true;document.getElementById("alog").style.display="none";document.getElementById("aok").style.display="flex";const sv=document.getElementById("adm-save-btn");if(sv)sv.style.display="none";refList();renderClientes();}else{document.getElementById("lerr").textContent="Senha incorreta.";document.getElementById("apass").value="";document.getElementById("apass").focus();}}
-function atab(n,b){document.querySelectorAll(".atb").forEach(t=>t.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".asc").forEach(s=>s.classList.remove("on"));document.getElementById("as-"+n).classList.add("on");const sv=document.getElementById("adm-save-btn"),cn=document.getElementById("acan");if(n==="cl"||n==="list"||n==="pdf"){sv.style.display="none";cn.style.display="none";}else{sv.style.display="";if(eid)cn.style.display="inline-flex";}}
+function atab(n,b){document.querySelectorAll(".atb").forEach(t=>t.classList.remove("on"));b.classList.add("on");document.querySelectorAll(".asc").forEach(s=>s.classList.remove("on"));document.getElementById("as-"+n).classList.add("on");const sv=document.getElementById("adm-save-btn"),cn=document.getElementById("acan");if(n==="cl"||n==="list"){sv.style.display="none";cn.style.display="none";}else{sv.style.display="";if(eid)cn.style.display="inline-flex";}}
 function refList(){document.getElementById("acnt").textContent=`${DB.length} estudo(s)`;const l=document.getElementById("alist");if(!DB.length){l.innerHTML='<p style="color:var(--muted);text-align:center;padding:18px;font-size:.83rem">Nenhum estudo. Clique em "Novo".</p>';return;}l.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><p style="font-size:.72rem;color:var(--muted);margin:0">↕ Arraste para reordenar</p><button class="bsm be" id="save-order-btn" onclick="saveOrder()" style="display:none">💾 Salvar ordem</button></div>'+DB.map((p,idx)=>{const c=CATS[p.cat]||CATS.eiv;return`<div class="pitem" draggable="true" data-idx="${idx}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="dropItem(event)"><div style="color:var(--muted);cursor:grab;font-size:.9rem;padding-right:6px">⠿</div><div class="piif"><div class="pit">${p.title}</div><div class="pim">${c.label} · ${p.year||"s/d"} · ${p.photos&&p.photos.length?p.photos.length+" foto(s)":"sem fotos"}</div></div><div class="piac"><button class="bsm be" onclick="editP('${p.id}')">✏ Editar</button><button class="bsm bd" onclick="delP('${p.id}')">✕</button></div></div>`;}).join("");}
 let dragIdx=null;
 function dragStart(e){dragIdx=+e.currentTarget.dataset.idx;e.dataTransfer.effectAllowed="move";}
@@ -941,307 +919,6 @@ function dol(){document.getElementById("dz").classList.remove("dov");}
 function ddr(e){e.preventDefault();dol();hf(e.dataTransfer.files);}
 function obsRv(){const obs=new IntersectionObserver((es)=>{es.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add("on"),i*70);obs.unobserve(e.target);}});},{threshold:.06});document.querySelectorAll(".rv:not(.on)").forEach(el=>obs.observe(el));}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeAdm();}});
-
-// ── GERADOR DE PDF (slides HTML → Print) ──
-function gerarPDF(){
-  const btn=document.getElementById("pdf-gen-btn");
-  const status=document.getElementById("pdf-status");
-  const optCapa=document.getElementById("pdf-opt-capa").checked;
-  const optSvc=document.getElementById("pdf-opt-servicos").checked;
-  const optProj=document.getElementById("pdf-opt-projetos").checked;
-  const optCli=document.getElementById("pdf-opt-clientes").checked;
-
-  btn.disabled=true; btn.textContent="⏳ Abrindo visualização...";
-  if(status) status.textContent="Uma nova janela vai abrir — use Ctrl+P / ⌘P para salvar como PDF.";
-
-  const logoSrc = document.querySelector(".hlogo img")?.src || "";
-  const VERDE="#285d02", VERDE_L="#9abf4a", VERDE_BG="#f5f9ec", BORDA="#dde8d0";
-  const CINZA="#4d6055", TINTA="#1a2a0e";
-
-  const CATS_PDF={
-    eiv:{label:"EIV / RIV",icon:"🏙️",grad:"linear-gradient(140deg,#1a3d10,#285d02,#9abf4a)"},
-    flora:{label:"Flora",icon:"🌳",grad:"linear-gradient(140deg,#1a3d10,#285d02,#9abf4a)"},
-    fauna:{label:"Fauna",icon:"🦋",grad:"linear-gradient(140deg,#0d2340,#133b65,#4d7368)"},
-    ambiental:{label:"Estudos Ambientais",icon:"📄",grad:"linear-gradient(140deg,#1a3d10,#285d02,#4d7368)"},
-    educacao:{label:"Educação Ambiental",icon:"📚",grad:"linear-gradient(140deg,#5c2e18,#bf6e50,#d9b449)"},
-  };
-
-  function slide(content){
-    return `<div class="slide">${content}</div>`;
-  }
-
-  function rodape(){
-    return `<div class="rodape">Orvalho Consultoria Ambiental &nbsp;·&nbsp; orvalhoambiental.com.br &nbsp;·&nbsp; (47) 99245-4106</div>`;
-  }
-
-  // ── CAPA ──
-  function slideCapa(){
-    const logoHTML = logoSrc
-      ? `<img src="${logoSrc}" class="capa-logo" alt="Orvalho">`
-      : `<div class="capa-logo-txt">Orvalho</div>`;
-    return slide(`
-      <div class="capa-hero">
-        ${logoHTML}
-        <div class="capa-stripe"></div>
-      </div>
-      <div class="capa-body">
-        <div class="eyebrow">Portfólio de Serviços · ${new Date().getFullYear()}</div>
-        <h1 class="capa-title">Orvalho Consultoria Ambiental</h1>
-        <div class="rule"></div>
-        <p class="capa-desc">Somos uma consultoria ambiental especializada em estudos, diagnósticos e projetos que conciliam desenvolvimento econômico e preservação do meio ambiente. Atuamos com equipe multidisciplinar e metodologia própria em todo o território nacional.</p>
-        <div class="chips">
-          <span class="chip">EIV / RIV</span>
-          <span class="chip">Flora &amp; Fauna</span>
-          <span class="chip">Estudos Ambientais</span>
-          <span class="chip">Educação Ambiental</span>
-          <span class="chip">Licenciamento Ambiental</span>
-        </div>
-      </div>
-      <div class="capa-footer">
-        <div class="capa-contact-row"><span>📧 orvalhoambiental@gmail.com</span><span>📱 (47) 99245-4106</span><span>🌐 orvalhoambiental.com.br</span></div>
-      </div>
-    `);
-  }
-
-  // ── SERVIÇOS ──
-  function slideServicos(){
-    const svcs=[
-      {icon:"🌿",titulo:"Levantamento de Flora",desc:"Inventário florístico, fitossociológico e mapeamento de vegetação para diagnósticos ambientais e atendimento de condicionantes de licenciamento."},
-      {icon:"🦋",titulo:"Fauna",desc:"Monitoramento e diagnóstico de fauna silvestre, levantamento de mastofauna, avifauna, herpetofauna e ictiofauna."},
-      {icon:"📄",titulo:"Estudos Ambientais",desc:"EIA/RIMA, PBA, RAP, diagnósticos ambientais, laudos técnicos e relatórios para processos de licenciamento ambiental."},
-      {icon:"📚",titulo:"Educação Ambiental",desc:"Programas de educação ambiental, oficinas, treinamentos e materiais didáticos para empresas, escolas e comunidades."},
-      {icon:"🌿",titulo:"Licenciamento Ambiental",desc:"Assessoria completa nos processos de licenciamento junto a órgãos estaduais e federais (IBAMA, CETESB, IAT e outros)."},
-      {icon:"🏙️",titulo:"EIV / RIV",desc:"Elaboração do Estudo e Relatório de Impacto de Vizinhança para empreendimentos conforme o Estatuto da Cidade."},
-    ];
-    return slide(`
-      <div class="sec-header">
-        <div class="eyebrow">O que fazemos</div>
-        <h2 class="sec-title">Nossos Serviços</h2>
-      </div>
-      <div class="svc-grid">
-        ${svcs.map(s=>`
-          <div class="svc-card">
-            <div class="svc-icon">${s.icon}</div>
-            <h3 class="svc-title">${s.titulo}</h3>
-            <p class="svc-desc">${s.desc}</p>
-          </div>
-        `).join("")}
-      </div>
-      ${rodape()}
-    `);
-  }
-
-  // ── PROJETO ──
-  function slideProjeto(p, idx, total){
-    const cat = CATS_PDF[p.cat] || CATS_PDF.eiv;
-    const photos = (p.photos||[]).slice(0,3);
-    const infos = (p.infos||"").split("|").map(s=>s.trim()).filter(Boolean).slice(0,4);
-    const scopeItems = (p.scope||"").split("\n").filter(s=>s.trim()).slice(0,5);
-    const resultItems = (p.results||"").split("\n").filter(s=>s.trim()).slice(0,4);
-
-    // galeria: foto principal grande + 2 thumbs
-    let galeria = "";
-    if(photos.length){
-      galeria = `
-        <div class="proj-galeria">
-          <div class="proj-foto-main" style="background:${cat.grad}">
-            <img src="${photos[0]}" alt="" onerror="this.style.display='none'">
-            <span class="proj-badge">${cat.label}</span>
-            ${p.year?`<span class="proj-year">${p.year}</span>`:""}
-            ${photos.length>1?`<div class="proj-counter">1 / ${photos.length}</div>`:""}
-          </div>
-          ${photos.length>1?`<div class="proj-thumbs">${photos.slice(1).map((ph,i)=>`
-            <div class="proj-thumb" style="background:${cat.grad}">
-              <img src="${ph}" alt="" onerror="this.style.display='none'">
-              <div class="proj-thumb-n">${i+2}/${photos.length}</div>
-            </div>
-          `).join("")}</div>`:""}
-        </div>
-      `;
-    } else {
-      galeria = `
-        <div class="proj-galeria">
-          <div class="proj-foto-main proj-no-foto" style="background:${cat.grad}">
-            <span class="proj-no-foto-icon">${cat.icon}</span>
-            <span class="proj-badge">${cat.label}</span>
-            ${p.year?`<span class="proj-year">${p.year}</span>`:""}
-          </div>
-        </div>
-      `;
-    }
-
-    return slide(`
-      <div class="proj-topo">
-        <div class="proj-num">Estudo de Caso ${idx+1} <span>de ${total}</span></div>
-        <div class="proj-cat-label">${cat.label}</div>
-      </div>
-      ${galeria}
-      <div class="proj-body">
-        <div class="proj-info-linha">
-          ${p.client?`<span class="proj-meta-label">Cliente</span><span class="proj-meta-val">${p.client}</span>`:""}
-          ${p.loc?`<span class="proj-meta-sep">·</span><span class="proj-meta-label">Local</span><span class="proj-meta-val">${p.loc}</span>`:""}
-        </div>
-        <h2 class="proj-title">${p.title}</h2>
-        ${p.desc?`<p class="proj-desc">${p.desc}</p>`:""}
-        ${infos.length?`<div class="proj-infos">${infos.map(inf=>{const pts=inf.split(":");return`<div class="proj-info-box"><div class="proj-info-lbl">${pts[0].trim()}</div><div class="proj-info-val">${pts.slice(1).join(":").trim()}</div></div>`;}).join("")}</div>`:""}
-        <div class="proj-cols">
-          ${scopeItems.length?`<div class="proj-col"><h4 class="proj-col-title">Escopo técnico</h4><ul class="proj-ul">${scopeItems.map(s=>`<li>${s.trim()}</li>`).join("")}</ul></div>`:""}
-          ${resultItems.length?`<div class="proj-col"><h4 class="proj-col-title">Resultados</h4><ul class="proj-ul">${resultItems.map(s=>`<li>${s.trim()}</li>`).join("")}</ul></div>`:""}
-        </div>
-      </div>
-      ${rodape()}
-    `);
-  }
-
-  // ── CLIENTES ──
-  function slideClientes(){
-    const logos = CLLogos.filter(Boolean);
-    return slide(`
-      <div class="sec-header">
-        <div class="eyebrow">Quem confia em nós</div>
-        <h2 class="sec-title">Clientes Atendidos</h2>
-      </div>
-      <div class="cli-grid">
-        ${logos.length
-          ? logos.map(u=>`<div class="cli-slot"><img src="${u}" alt="" onerror="this.parentElement.style.opacity='.3'"></div>`).join("")
-          : `<p style="color:${CINZA};font-size:.9rem;grid-column:1/-1;text-align:center;padding:40px 0">Nenhum cliente cadastrado ainda.</p>`
-        }
-      </div>
-      ${rodape()}
-    `);
-  }
-
-  // ── MONTA SLIDES ──
-  let slides = [];
-  if(optCapa) slides.push(slideCapa());
-  if(optSvc)  slides.push(slideServicos());
-  if(optProj) DB.forEach((p,i)=>slides.push(slideProjeto(p,i,DB.length)));
-  if(optCli)  slides.push(slideClientes());
-
-  if(!slides.length){ btn.disabled=false; btn.textContent="📥 Gerar e baixar PDF"; return; }
-
-  // ── CSS COMPLETO ──
-  const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#e8eee0;font-family:'DM Sans',system-ui,sans-serif;color:#1a2a0e;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-
-    .slide{
-      width:210mm;min-height:297mm;background:#fff;
-      margin:0 auto 20px;position:relative;
-      display:flex;flex-direction:column;overflow:hidden;
-      page-break-after:always;
-    }
-
-    /* ── CAPA ── */
-    .capa-hero{background:#285d02;min-height:200px;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
-    .capa-logo{max-height:90px;max-width:280px;width:auto;object-fit:contain;filter:brightness(0) invert(1)}
-    .capa-logo-txt{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;color:#fff;letter-spacing:.01em}
-    .capa-stripe{position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#285d02,#9abf4a,#d9b449)}
-    .capa-body{padding:44px 56px 40px;flex:1}
-    .capa-title{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:#1a2a0e;margin-bottom:8px;line-height:1.2}
-    .capa-desc{font-size:.95rem;color:#4d6055;line-height:1.8;font-weight:300;max-width:520px;margin-bottom:28px}
-    .capa-footer{background:#f5f9ec;border-top:1.5px solid #dde8d0;padding:18px 56px}
-    .capa-contact-row{display:flex;gap:32px;flex-wrap:wrap;font-size:.82rem;color:#4d6055}
-    .capa-contact-row span{display:flex;align-items:center;gap:7px}
-
-    /* ── COMUM ── */
-    .eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#285d02;display:flex;align-items:center;gap:10px;margin-bottom:10px}
-    .eyebrow::after{content:"";width:28px;height:1.5px;background:#9abf4a;border-radius:2px;display:inline-block}
-    .rule{height:2px;width:40px;background:#9abf4a;border-radius:2px;margin-bottom:20px}
-    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
-    .chip{background:#eaf2d0;border:1.5px solid #c5d98a;color:#285d02;font-size:.75rem;font-weight:600;padding:5px 14px;border-radius:50px}
-    .rodape{background:#285d02;color:rgba(255,255,255,.65);font-size:.65rem;text-align:center;padding:8px;letter-spacing:.04em;flex-shrink:0}
-    .sec-header{background:#285d02;padding:28px 48px 22px}
-    .sec-header .eyebrow{color:#9abf4a}
-    .sec-header .eyebrow::after{background:#9abf4a;opacity:.5}
-    .sec-title{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:#fff}
-
-    /* ── SERVIÇOS ── */
-    .svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;background:#f5f9ec}
-    .svc-card{padding:28px 32px;border-bottom:1px solid #dde8d0;border-right:1px solid #dde8d0;background:#fff;position:relative}
-    .svc-card:nth-child(2n){border-right:none}
-    .svc-card:nth-last-child(-n+2){border-bottom:none}
-    .svc-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#285d02}
-    .svc-icon{font-size:1.6rem;margin-bottom:10px}
-    .svc-title{font-family:'Playfair Display',serif;font-size:.97rem;color:#285d02;font-weight:700;margin-bottom:7px}
-    .svc-desc{font-size:.81rem;color:#4d6055;line-height:1.7}
-
-    /* ── PROJETO ── */
-    .proj-topo{background:#285d02;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-    .proj-num{font-size:.7rem;color:rgba(255,255,255,.55);font-weight:500}
-    .proj-num span{color:rgba(255,255,255,.35)}
-    .proj-cat-label{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9abf4a}
-    .proj-galeria{display:flex;gap:3px;flex-shrink:0}
-    .proj-foto-main{position:relative;flex:1;height:200px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-    .proj-foto-main img{width:100%;height:100%;object-fit:cover;display:block}
-    .proj-badge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.38);color:#fff;font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 11px;border-radius:50px}
-    .proj-year{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.35);color:rgba(255,255,255,.85);font-size:.65rem;padding:3px 10px;border-radius:50px}
-    .proj-counter{position:absolute;bottom:8px;right:10px;background:rgba(0,0,0,.38);color:#fff;font-size:.6rem;padding:2px 8px;border-radius:50px}
-    .proj-no-foto{flex:1;height:200px}
-    .proj-no-foto-icon{font-size:3rem;opacity:.35}
-    .proj-thumbs{display:flex;flex-direction:column;gap:3px;width:120px;flex-shrink:0}
-    .proj-thumb{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
-    .proj-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-    .proj-thumb-n{position:absolute;bottom:4px;right:5px;background:rgba(0,0,0,.45);color:#fff;font-size:.55rem;padding:1px 6px;border-radius:50px}
-    .proj-body{padding:18px 24px 16px;flex:1;display:flex;flex-direction:column;gap:10px}
-    .proj-info-linha{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-    .proj-meta-label{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9abf4a}
-    .proj-meta-val{font-size:.78rem;color:#4d6055;font-weight:500}
-    .proj-meta-sep{color:#dde8d0;font-size:1rem}
-    .proj-title{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;color:#285d02;line-height:1.22}
-    .proj-desc{font-size:.85rem;color:#4d6055;line-height:1.75;font-weight:300}
-    .proj-infos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:2px}
-    .proj-info-box{background:#f5f9ec;border-radius:9px;padding:9px 14px;border:1px solid #dde8d0}
-    .proj-info-lbl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#285d02;margin-bottom:2px}
-    .proj-info-val{font-size:.83rem;color:#1a2a0e;font-weight:500}
-    .proj-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;flex:1}
-    .proj-col{}
-    .proj-col-title{font-family:'Playfair Display',serif;font-size:.88rem;color:#285d02;font-weight:700;padding-bottom:6px;border-bottom:1px solid #dde8d0;margin-bottom:8px}
-    .proj-ul{list-style:none}
-    .proj-ul li{display:flex;align-items:flex-start;gap:8px;padding:3px 0;font-size:.78rem;color:#4d6055;line-height:1.55}
-    .proj-ul li::before{content:"→";color:#9abf4a;flex-shrink:0;margin-top:1px}
-
-    /* ── CLIENTES ── */
-    .cli-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:32px 48px;flex:1;align-content:start}
-    .cli-slot{border:1.5px solid #dde8d0;border-radius:12px;height:72px;display:flex;align-items:center;justify-content:center;padding:10px;background:#fff;transition:all .2s}
-    .cli-slot img{max-width:100%;max-height:100%;object-fit:contain}
-
-    /* ── PRINT ── */
-    @media print{
-      body{background:#fff}
-      .slide{margin:0;box-shadow:none}
-      .no-print{display:none!important}
-    }
-  `;
-
-  // ── TOOLBAR ──
-  const toolbar = `
-    <div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#285d02;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;z-index:999;box-shadow:0 2px 12px rgba(0,0,0,.2)">
-      <div style="display:flex;align-items:center;gap:12px">
-        <span style="color:#fff;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600">Orvalho · Portfólio PDF</span>
-        <span style="color:rgba(255,255,255,.5);font-size:.8rem">${slides.length} página${slides.length>1?"s":""}</span>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button onclick="window.print()" style="background:#9abf4a;color:#1a2a0e;border:none;border-radius:50px;padding:9px 22px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">📥 Salvar como PDF</button>
-        <button onclick="window.close()" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:50px;padding:9px 18px;font-size:.85rem;cursor:pointer;font-family:'DM Sans',sans-serif">✕ Fechar</button>
-      </div>
-    </div>
-    <div class="no-print" style="height:56px"></div>
-  `;
-
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Portfólio · Orvalho</title><style>${css}</style></head><body>${toolbar}${slides.join("")}</body></html>`;
-
-  const win = window.open("","_blank");
-  if(!win){ alert("Permita popups para este site e tente novamente."); btn.disabled=false; btn.textContent="📥 Gerar e baixar PDF"; return; }
-  win.document.write(html);
-  win.document.close();
-
-  btn.disabled=false;
-  btn.textContent="📥 Gerar e baixar PDF";
-  if(status) status.textContent="✅ Pronto! Na nova janela, clique em "Salvar como PDF".";
-}
-
 loadDB();renderGrid();renderClientes();obsRv();
 </script>
 </body>
